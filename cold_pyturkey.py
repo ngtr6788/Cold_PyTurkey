@@ -62,13 +62,29 @@ Cold Turkey will only do that in PRO. For now, I don't know how to activate
 these functions other than use the Python REPL "command line".
 """
 
-def pomodoro(block_name: str, block_min: int, break_min: int, loops: int = 1):
-    """This is the pomodoro timer loop for a given block_name."""
-    for i in range(loops):
-        start_block(block_name, block_min, lock = True) # block takes mins
-        time.sleep(block_min * SEC_PER_MIN)
-        stop.block(block_name)
-        time.sleep(break_min * SEC_PER_MIN)  # sleep takes in secs
+def pomodoro(block_name: str, block_min: int, break_min: int, \
+             block_first: bool = True, loops: int = 1, lock: bool = True):
+    """This emulates the pomodoro timer, blocking the block_name for a few minutes and 
+    unlocks it for a few minutes. You can also choose to have the block unlocked first
+    and loop over and over.
+    
+    By default, the block is blocked first and looped once."""
+
+    block_sec = block_min * SEC_PER_MIN
+    break_sec = break_min * SEC_PER_MIN
+
+    if block_first:
+        for i in range(loops):
+            start_block(block_name, block_min, lock)
+            time.sleep(block_sec)
+            stop_block(block_name)
+            time.sleep(break_sec)
+    else:
+        for i in range(loops):
+            stop_block(block_name)
+            time.sleep(break_sec)
+            start_block(block_name, block_min, lock)
+            time.sleep(block_sec)
 
 def frozen_pomodoro(work_min: int, frozen_min: int, loops: int = 1):
     """Loops between using the computer and Frozen Turkey, given the minutes
@@ -92,11 +108,11 @@ from either ISO format or existing datetime object."""
 def _convert_to_time(given_time):
     """Returns the time object telling the time from ISO format or existing time
 object."""
-    # convert set_time into a datetime.time object.
+    # convert given_time into a datetime.time object.
     if isinstance(given_time, str):
         return datetime.time.fromisoformat(given_time)
     elif isinstance(given_time, datetime.time):
-        return set_time
+        return given_time
     else:
         raise Exception("given_time not in ISO format or datetime.time object")
 
@@ -104,7 +120,7 @@ object."""
     
 def start_block_until(block_name: str, end_time, start_time = now()):
     """Blocks a given block_name from the optional start_time to end_time.
-    NOTE: end_time and start_time can be """
+    NOTE: end_time and start_time can be either in ISO format or datetime object. """
     working_end_time = _convert_to_datetime(end_time)
     working_start_time = _convert_to_datetime(start_time)
     
