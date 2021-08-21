@@ -221,8 +221,8 @@ def schedule_blocks(schedule: List[Tuple[str, str, str]]):
     working_schedule.sort(key = lambda sch: sch[1])
 
     for block_name, start_time, end_time in working_schedule:
-        if now().time() > start_time:
-            if now().time() < end_time:
+        if now() > start_time:
+            if now() < end_time:
                 start_block_until(block_name, end_time)
             else:
                 continue
