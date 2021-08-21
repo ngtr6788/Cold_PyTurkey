@@ -6,15 +6,15 @@ import time
 import datetime
 import math
 
-COLD_TURKEY = r'"C:\Program Files\Cold Turkey\Cold Turkey Blocker.exe"'
-START = 'start'
-STOP = 'stop'
-ADD = 'add'
-TOGGLE = 'toggle'
+_COLD_TURKEY = r'"C:\Program Files\Cold Turkey\Cold Turkey Blocker.exe"'
+_START = 'start'
+_STOP = 'stop'
+_ADD = 'add'
+_TOGGLE = 'toggle'
 
-LOCK = '-lock'
-WEB = 'web'
-EXCEPTION = 'exception'
+_LOCK = '-lock'
+_WEB = 'web'
+_EXCEPTION = 'exception'
 
 SEC_PER_MIN = 60
 MIN_PER_HOUR = 60
@@ -22,6 +22,12 @@ MIN_PER_HOUR = 60
 FROZEN_TURKEY = "Frozen Turkey"
 
 now = datetime.datetime.now  # it's an alias
+
+# "datetime.time" constants
+TEN_THIRTY = datetime.time(22, 30, 0)
+MILLISEC_BEFORE_MIDNIGHT = datetime.time(23, 59, 59, 999999)
+MIDNIGHT = datetime.time(0, 0, 0, 0)
+ONE_THIRTY = datetime.time(1, 30, 0)
 
 """
 WISHLIST:
@@ -39,22 +45,22 @@ WISHLIST:
 
 def start_block(block_name: str, minutes: int = 0, lock: bool = True):
     """Blocks a given block_name"""
-    LOCK_STATUS = LOCK if lock else ''
+    LOCK_STATUS = _LOCK if lock else ''
     TIME_STATUS = str(minutes) if minutes > 0 else ''
-    subprocess.run(f'{COLD_TURKEY} -{START} "{block_name}" {LOCK_STATUS} {TIME_STATUS}')
+    subprocess.run(f'{_COLD_TURKEY} -{_START} "{block_name}" {LOCK_STATUS} {TIME_STATUS}')
 
 def stop_block(block_name: str):
     """Ends the block of a given block_name"""
-    subprocess.run(f'{COLD_TURKEY} -{STOP} "{block_name}"')
+    subprocess.run(f'{_COLD_TURKEY} -{_STOP} "{block_name}"')
 
 def toggle_block(block_name: str):
     """Starts or stops an unlocked block"""
-    subprocess.run(f'{COLD_TURKEY} -{TOGGLE} "{block_name}"')
+    subprocess.run(f'{_COLD_TURKEY} -{_TOGGLE} "{block_name}"')
 
 def add_url(block_name: str, url: str, exception: bool = False):
     """Adds the URL into the block, either as a blocked site or exception"""
-    where_add = EXCEPTION if exception else WEB
-    subprocess.run(f'{COLD_TURKEY} -{ADD} "{block_name}" -{where_add} "{url}"')
+    where_add = _EXCEPTION if exception else _WEB
+    subprocess.run(f'{_COLD_TURKEY} -{_ADD} "{block_name}" -{where_add} "{url}"')
 
 """
 These will then be the pomodoro functions implemented by Python, because
@@ -135,12 +141,6 @@ def start_block_until(block_name: str, end_time, start_time = now()):
 
 # These will be called the night Frozen block functions.
 
-# "datetime.time" constants
-TEN_THIRTY = datetime.time(22, 30, 0)
-SEC_BEFORE_MIDNIGHT = datetime.time(23, 59, 59, 999999)
-MIDNIGHT = datetime.time(0, 0, 0, 0)
-ONE_THIRTY = datetime.time(1, 30, 0)
-
 def frozen_at_night(set_time):
     """Activates Frozen Turkey from specified set_time to 1:30:00AM next day.
     requires: 10:30PM <= set_time <= 11:59PM"""
@@ -153,7 +153,7 @@ def frozen_at_night(set_time):
 
     start_block_time = _convert_to_time(set_time)
 
-    if TEN_THIRTY <= start_block_time <= SEC_BEFORE_MIDNIGHT:
+    if TEN_THIRTY <= start_block_time <= MILLISEC_BEFORE_MIDNIGHT:
         # we wait from 1:30AM to start time
         while ONE_THIRTY <= now().time() < start_block_time:
             time.sleep(1)
@@ -162,7 +162,7 @@ def frozen_at_night(set_time):
 
         # if now's time is between start time and midnight, ideally right
         # after start time ...
-        if start_block_time <= now().time() <= SEC_BEFORE_MIDNIGHT:
+        if start_block_time <= now().time() <= MILLISEC_BEFORE_MIDNIGHT:
             today = datetime.date.today()
             tomorrow = today + datetime.timedelta(days=1)
             # make a new datetime object saying 1:30AM tomorrow
@@ -190,7 +190,7 @@ def frozen_at_midnight():
     """Activates Frozen Turkey at midnight for 1.5h
     note: this while loop is just preemptive if Task Scheduler doesn't program
     it to run at midnight."""
-    while (ONE_THIRTY <= now().time() <= SEC_BEFORE_MIDNIGHT):
+    while (ONE_THIRTY <= now().time() <= MILLISEC_BEFORE_MIDNIGHT):
         time.sleep(1)
     # if you're here after the while loop, 12:00AM < now < 1:30AM
     today = datetime.date.today()
