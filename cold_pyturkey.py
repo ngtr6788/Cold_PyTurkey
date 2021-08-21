@@ -5,6 +5,8 @@ import subprocess
 import time
 import datetime
 import math
+from typing import List, Tuple
+import copy
 
 _COLD_TURKEY = r'"C:\Program Files\Cold Turkey\Cold Turkey Blocker.exe"'
 _START = 'start'
@@ -33,11 +35,11 @@ ONE_THIRTY = datetime.time(1, 30, 0)
 WISHLIST:
 - Implement a "make-shift" pomodoro timer (DONE!)
 - Implement a night Frozen Turkey block that runs to 1:30AM next day. (DONE!)
-- Implement scheduling via Python and Task Scheduler, very vague.
+- Implement scheduling via Python. (ON ATTEMPT.)
 - Make a "mealbreak" Frozen Turkey block for 1.5h, like lunch or dinner.
 - Find a way to block applications via Python.
 - Notifications, on-screen timers, etc.
-- What is Git? What's GitHub? yada. (Mind a bit blown. so no. later.)
+- What is Git? What's GitHub? yada. (Learned to use Git now.)
 - Implement a "start block until certain time" function (DONE!)
 """
 
@@ -102,7 +104,7 @@ def frozen_pomodoro(work_min: int, frozen_min: int, loops: int = 1):
 
 # Secret convert to time object functions.
 
-def _convert_to_datetime(given_datetime):
+def _convert_to_datetime(given_datetime) -> datetime.datetime:
     """Returns the datetime object telling the date and time given
 from either ISO format or existing datetime object."""
     if isinstance(given_datetime, str):
@@ -112,7 +114,7 @@ from either ISO format or existing datetime object."""
     else:
         raise Exception("given_datetime not in ISO format or datetime.datetime object")
 
-def _convert_to_time(given_time):
+def _convert_to_time(given_time) -> datetime.time: 
     """Returns the time object telling the time from ISO format or existing time
 object."""
     # convert given_time into a datetime.time object.
@@ -125,9 +127,10 @@ object."""
 
 # This is my implementation of blocking up to a certain time, like Cold Turkey
     
-def start_block_until(block_name: str, end_time, start_time = now()):
+def start_block_until(block_name: str, end_time: datetime.datetime, \
+                      start_time: datetime.datetime = now()):
     """Blocks a given block_name from the optional start_time to end_time.
-    NOTE: end_time and start_time can be either in ISO format or datetime object. """
+    end_time and start_time can be either in ISO format or datetime object. """
     working_end_time = _convert_to_datetime(end_time)
     working_start_time = _convert_to_datetime(start_time)
     
@@ -140,7 +143,6 @@ def start_block_until(block_name: str, end_time, start_time = now()):
     start_block(block_name, block_min_duration)
 
 # These will be called the night Frozen block functions.
-
 def frozen_at_night(set_time):
     """Activates Frozen Turkey from specified set_time to 1:30:00AM next day.
     requires: 10:30PM <= set_time <= 11:59PM"""
@@ -199,3 +201,30 @@ def frozen_at_midnight():
     min_remains = round(remaining_time.total_seconds() / SEC_PER_MIN)
     start_block(FROZEN_TURKEY, min_remains)  
     
+# This is my "catch-all" scheduling function, first version.
+def schedule_blocks(schedule: List[Tuple[str, str, str]]):
+    """Schedules a series of blocks to block, given what start time
+    until what end time.
+    
+    requires: - schedule is a sequence (list, tuple, whatever?) of 
+    [block name string, start time, end time] triplets. (for now anyway.)"""
+
+    today = datetime.date.today()
+
+    working_schedule = copy.deepcopy(schedule)
+    for scheduled_block in working_schedule:
+        for i in range(1, 3):
+            # converts start and end time to time object
+            working_time = _convert_to_time(scheduled_block[i])
+            scheduled_block[i] = datetime.datetime.combine(today, working_time)
+
+    working_schedule.sort(key = lambda sch: sch[1])
+
+    for block_name, start_time, end_time in working_schedule:
+        if now().time() > start_time:
+            if now().time() < end_time:
+                start_block_until(block_name, end_time)
+            else:
+                continue
+        else:
+            start_block_until(block_name, end_time, start_time)
