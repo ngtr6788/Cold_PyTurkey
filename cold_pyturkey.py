@@ -92,6 +92,7 @@ def frozen_pomodoro(work_min: int, frozen_min: int, loops: int = 1):
     for i in range(loops):
         time.sleep(work_min * SEC_PER_MIN)  # sleep takes in secs
         start_block(FROZEN_TURKEY, minutes = frozen_min)  # block takes mins
+        time.sleep(frozen_min * SEC_PER_MIN)
 
 # Secret convert to time object functions.
 
