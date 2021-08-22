@@ -202,7 +202,7 @@ def frozen_at_midnight():
     start_block(FROZEN_TURKEY, min_remains)  
     
 # This is my "catch-all" scheduling function, first version.
-def schedule_blocks(schedule: List[Tuple[str, str, str]]):
+def schedule_blocks(schedule):
     """Schedules a series of blocks to block, given what start time
     until what end time.
     
