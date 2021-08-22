@@ -158,11 +158,12 @@ def frozen_at_night(set_time):
     start_block_time = _convert_to_time(set_time)
 
     if TEN_THIRTY <= start_block_time <= MILLISEC_BEFORE_MIDNIGHT:
-        today_date = today()
-        if MIDNIGHT <= now() < ONE_THIRTY:
+        if MIDNIGHT <= now().time() < ONE_THIRTY:
+            today_date = today()
             one_thirty_today = datetime.datetime.combine(today_date, ONE_THIRTY)
             start_block_until(FROZEN_TURKEY, one_thirty_today)
         else:
+            today_date = today()
             tomorrow = today_date + datetime.timedelta(days = 1)
             one_thirty_tomorrow = datetime.datetime.combine(tomorrow, ONE_THIRTY)
             set_datetime = datetime.datetime.combine(today, start_block_time)
