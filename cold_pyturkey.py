@@ -23,7 +23,7 @@ MIN_PER_HOUR = 60
 
 FROZEN_TURKEY = "Frozen Turkey"
 
-# "Method?", "Function?" alias
+# Method / function aliases
 now = datetime.datetime.now  
 today = datetime.date.today  
 
@@ -37,8 +37,8 @@ ONE_THIRTY = datetime.time(1, 30, 0)
 WISHLIST:
 - Implement a "make-shift" pomodoro timer (DONE!)
 - Implement a night Frozen Turkey block that runs to 1:30AM next day. (DONE!)
-- Implement scheduling via Python. (ON ATTEMPT.)
-- Make a "mealbreak" Frozen Turkey block for 1.5h, like lunch or dinner.
+- Implement scheduling via Python. (DONE!?)
+- Make a "mealbreak" Frozen Turkey block for 1.5h, like lunch or dinner. (DONE!?)
 - Find a way to block applications via Python.
 - Notifications, on-screen timers, etc.
 - What is Git? What's GitHub? yada. (Learned to use Git now.)
@@ -174,6 +174,8 @@ def frozen_at_midnight():
     """Activates Frozen Turkey at midnight for 1.5h
     note: this while loop is just preemptive if Task Scheduler doesn't program
     it to run at midnight."""
+
+    """
     while (ONE_THIRTY <= now().time() <= MILLISEC_BEFORE_MIDNIGHT):
         time.sleep(1)
     # if you're here after the while loop, 12:00AM < now < 1:30AM
@@ -182,6 +184,18 @@ def frozen_at_midnight():
     remaining_time = one_thirty_today - now()
     min_remains = round(remaining_time.total_seconds() / SEC_PER_MIN)
     start_block(FROZEN_TURKEY, min_remains)  
+    """
+
+    today_date = today()
+    if (MIDNIGHT <= now().time() < ONE_THIRTY):
+        working_date = today_date
+    else:
+        tomorrow = today_date + datetime.timedelta(days = 1)
+        working_date = tomorrow
+    start_midnight = datetime.datetime.combine(working_date, MIDNIGHT)
+    end_one_thirty = datetime.datetime.combine(working_date, ONE_THIRTY)
+    start_block_until(FROZEN_TURKEY, end_one_thirty, start_midnight)
+        
     
 # This is my "catch-all" scheduling function, first version.
 def schedule_blocks(schedule):
