@@ -48,17 +48,17 @@ WISHLIST:
 # These are the "starter" PyTurkey functions.
 
 def start_block(block_name: str, minutes: int = 0, lock: bool = True):
-    """Blocks a given block_name"""
+    """Blocks a given block_name. Locking a block for a few minutes is optional"""
     LOCK_STATUS = _LOCK if lock else ''
     TIME_STATUS = str(minutes) if minutes > 0 else ''
     subprocess.run(f'{_COLD_TURKEY} -{_START} "{block_name}" {LOCK_STATUS} {TIME_STATUS}')
 
 def stop_block(block_name: str):
-    """Ends the block of a given block_name"""
+    """Stops the block of a given block_name"""
     subprocess.run(f'{_COLD_TURKEY} -{_STOP} "{block_name}"')
 
 def toggle_block(block_name: str):
-    """Starts or stops an unlocked block"""
+    """Stars the block if the block is off and turns if off if it is on and unlocked."""
     subprocess.run(f'{_COLD_TURKEY} -{_TOGGLE} "{block_name}"')
 
 def add_url(block_name: str, url: str, exception: bool = False):
@@ -66,11 +66,9 @@ def add_url(block_name: str, url: str, exception: bool = False):
     where_add = _EXCEPTION if exception else _WEB
     subprocess.run(f'{_COLD_TURKEY} -{_ADD} "{block_name}" -{where_add} "{url}"')
 
-"""
-These will then be the pomodoro functions implemented by Python, because
-Cold Turkey will only do that in PRO. For now, I don't know how to activate
-these functions other than use the Python REPL "command line".
-"""
+# These will then be the pomodoro functions implemented by Python, because
+# Cold Turkey will only do that in PRO. For now, I don't know how to activate
+# these functions other than use the Python REPL "command line".
 
 def pomodoro(block_name: str, block_min: int, break_min: int, \
              block_first: bool = True, loops: int = 1, lock: bool = True):
@@ -108,7 +106,7 @@ def frozen_pomodoro(work_min: int, frozen_min: int, loops: int = 1):
 
 def _convert_to_datetime(given_datetime) -> datetime.datetime:
     """Returns the datetime object telling the date and time given
-from either ISO format or existing datetime object."""
+    from either ISO format or existing datetime object."""
     if isinstance(given_datetime, str):
         return datetime.datetime.fromisoformat(given_datetime)
     elif isinstance(given_datetime, datetime.datetime):
@@ -117,8 +115,7 @@ from either ISO format or existing datetime object."""
         raise Exception("given_datetime not in ISO format or datetime.datetime object")
 
 def _convert_to_time(given_time) -> datetime.time: 
-    """Returns the time object telling the time from ISO format or existing time
-object."""
+    """Returns the time object telling the time from ISO format or existing time object."""
     # convert given_time into a datetime.time object.
     if isinstance(given_time, str):
         return datetime.time.fromisoformat(given_time)
@@ -128,7 +125,6 @@ object."""
         raise Exception("given_time not in ISO format or datetime.time object")
 
 # This is my implementation of blocking up to a certain time, like Cold Turkey
-    
 def start_block_until(block_name: str, end_time: datetime.datetime, \
                       start_time: datetime.datetime = now()):
     """Blocks a given block_name from the optional start_time to end_time.
@@ -145,15 +141,10 @@ def start_block_until(block_name: str, end_time: datetime.datetime, \
     start_block(block_name, block_min_duration)
 
 # These will be called the night Frozen block functions.
+
 def frozen_at_night(set_time):
     """Activates Frozen Turkey from specified set_time to 1:30:00AM next day.
-    requires: 10:30PM <= set_time <= 11:59PM"""
-
-    """heads-up: I DID NOT take into account Daylight Savings, so..., for me
-    I'd just use Task Scheduler and set it on 10:30PM every day.
-              Also, if set_time is 11:59PM, weird things happen. no recommend."""
-
-    # !: I did remember someone say whatever you do, NO programming time
+    requires: 10:30:00PM <= set_time <= 11:59:59PM"""
 
     start_block_time = _convert_to_time(set_time)
 
@@ -175,17 +166,6 @@ def frozen_at_midnight():
     """Activates Frozen Turkey at midnight for 1.5h
     note: this while loop is just preemptive if Task Scheduler doesn't program
     it to run at midnight."""
-
-    """
-    while (ONE_THIRTY <= now().time() <= MILLISEC_BEFORE_MIDNIGHT):
-        time.sleep(1)
-    # if you're here after the while loop, 12:00AM < now < 1:30AM
-    today_date = today()
-    one_thirty_today = datetime.datetime.combine(today_date, ONE_THIRTY)
-    remaining_time = one_thirty_today - now()
-    min_remains = round(remaining_time.total_seconds() / SEC_PER_MIN)
-    start_block(FROZEN_TURKEY, min_remains)  
-    """
 
     today_date = today()
     if (MIDNIGHT <= now().time() < ONE_THIRTY):
@@ -215,7 +195,7 @@ def schedule_blocks(schedule):
             working_time = _convert_to_time(scheduled_block[i])
             scheduled_block[i] = datetime.datetime.combine(today_date, working_time)
 
-    working_schedule.sort(key = lambda sch: sch[1])
+    working_schedule.sort(key = lambda sch: sch[1])  # sort by start time.
 
     for block_name, start_time, end_time in working_schedule:
         if now() > start_time:
