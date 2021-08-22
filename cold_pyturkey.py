@@ -23,7 +23,9 @@ MIN_PER_HOUR = 60
 
 FROZEN_TURKEY = "Frozen Turkey"
 
-now = datetime.datetime.now  # it's an alias
+# "Method?", "Function?" alias
+now = datetime.datetime.now  
+today = datetime.date.today  
 
 # "datetime.time" constants
 TEN_THIRTY = datetime.time(22, 30, 0)
@@ -156,35 +158,15 @@ def frozen_at_night(set_time):
     start_block_time = _convert_to_time(set_time)
 
     if TEN_THIRTY <= start_block_time <= MILLISEC_BEFORE_MIDNIGHT:
-        # we wait from 1:30AM to start time
-        while ONE_THIRTY <= now().time() < start_block_time:
-            time.sleep(1)
-
-        remaining_time = None
-
-        # if now's time is between start time and midnight, ideally right
-        # after start time ...
-        if start_block_time <= now().time() <= MILLISEC_BEFORE_MIDNIGHT:
-            today = datetime.date.today()
-            tomorrow = today + datetime.timedelta(days=1)
-            # make a new datetime object saying 1:30AM tomorrow
+        today_date = today()
+        if MIDNIGHT <= now() < ONE_THIRTY:
+            one_thirty_today = datetime.datetime.combine(today_date, ONE_THIRTY)
+            start_block_until(FROZEN_TURKEY, one_thirty_today)
+        else:
+            tomorrow = today_date + datetime.timedelta(days = 1)
             one_thirty_tomorrow = datetime.datetime.combine(tomorrow, ONE_THIRTY)
-            # does some time arithmetic and returns a timedelta object
-            remaining_time = one_thirty_tomorrow - now()
-        elif MIDNIGHT <= now().time() < ONE_THIRTY:
-            today = datetime.date.today()
-            # same idea here.
-            one_thirty_today = datetime.datetime.combine(today, ONE_THIRTY)
-            remaining_time = one_thirty_today - now()
-            
-        """NOTE: the reason why I use one_thirty - now instead of
-        one_thirty - start_block is because in case I might call this function
-        on the Python command line at a time AFTER the time given as argument,
-        it still blocks until 1:30AM, not for a set amount of time."""
-        
-        # convert timedelta into minutes
-        min_remains = round(remaining_time.total_seconds() / SEC_PER_MIN)
-        start_block(FROZEN_TURKEY, min_remains)
+            set_datetime = datetime.datetime.combine(today, start_block_time)
+            start_block_until(FROZEN_TURKEY, one_thirty_tomorrow, set_datetime)
     else:
         raise ValueError("set_time not between 22:30:00 and 23:59:59 next day")
 
@@ -195,8 +177,8 @@ def frozen_at_midnight():
     while (ONE_THIRTY <= now().time() <= MILLISEC_BEFORE_MIDNIGHT):
         time.sleep(1)
     # if you're here after the while loop, 12:00AM < now < 1:30AM
-    today = datetime.date.today()
-    one_thirty_today = datetime.datetime.combine(today, ONE_THIRTY)
+    today_date = today()
+    one_thirty_today = datetime.datetime.combine(today_date, ONE_THIRTY)
     remaining_time = one_thirty_today - now()
     min_remains = round(remaining_time.total_seconds() / SEC_PER_MIN)
     start_block(FROZEN_TURKEY, min_remains)  
@@ -209,14 +191,14 @@ def schedule_blocks(schedule):
     requires: - schedule is a sequence (list, tuple, whatever?) of 
     [block name string, start time, end time] triplets. (for now anyway.)"""
 
-    today = datetime.date.today()
+    today_date = today()
 
     working_schedule = copy.deepcopy(schedule)
     for scheduled_block in working_schedule:
         for i in range(1, 3):
             # converts start and end time to time object
             working_time = _convert_to_time(scheduled_block[i])
-            scheduled_block[i] = datetime.datetime.combine(today, working_time)
+            scheduled_block[i] = datetime.datetime.combine(today_date, working_time)
 
     working_schedule.sort(key = lambda sch: sch[1])
 
