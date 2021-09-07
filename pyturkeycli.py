@@ -15,6 +15,11 @@ def main():
     # subparser for stop command
 
     # subparser for toggle command
+    def parse_toggle(args):
+        pyturkey.toggle(args.blockname)
+    ptoggle = func_parser.add_parser("toggle")
+    ptoggle.add_argument("blockname", type=str)
+    ptoggle.set_defaults(func=parse_toggle)
 
     # subparser for add command
 
