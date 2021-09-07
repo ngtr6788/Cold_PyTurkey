@@ -34,6 +34,13 @@ def main():
     ptoggle.set_defaults(func=parse_toggle)
 
     # subparser for add command
+    def parse_add(args):
+        pyturkey.add_url(args.blockname, args.url, args.exception)
+    padd = func_parser.add_parser("add")
+    padd.add_argument("blockname", type=str)
+    padd.add_argument("url", type=str)
+    padd.add_argument("--exception", action="store_true")
+    padd.set_defaults(func = parse_add)
 
     # subparser for pomodoro command
     def parse_pomodoro(args):
@@ -46,7 +53,7 @@ def main():
     pmdr.add_argument("loops", type=int)
     pmdr.add_argument("-l", "--lock", action='store_true')
     pmdr.add_argument("--breakf", action='store_false')
-    pmdr.set_defaults(func=parse_pomodoro)
+    pmdr.set_defaults(func=parse_pomodoro, loops=1)
 
     # subparser for frozen (start frozen) command
 
