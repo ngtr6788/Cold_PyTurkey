@@ -1,0 +1,41 @@
+import argparse
+import cold_pyturkey as pyturkey
+
+_FROZEN = "frozen"
+
+def main():
+    # TODO: Make a help string later. I just need it to work first.
+
+    # I made the top-level parser for the function type only.
+    parser = argparse.ArgumentParser()
+    func_parser = parser.add_subparsers(title="function")
+
+    # subparser for start command
+
+    # subparser for stop command
+
+    # subparser for toggle command
+
+    # subparser for add command
+
+    # subparser for pomodoro command
+    def parse_pomodoro(args):
+        pyturkey.pomodoro(args.blockname, args.blockmin, args.breakmin, args.breakf, args.loops, args.lock)
+
+    pmdr = func_parser.add_parser("pomodoro")
+    pmdr.add_argument("blockname", type=str)
+    pmdr.add_argument("blockmin", type=int)
+    pmdr.add_argument("breakmin", type=int)
+    pmdr.add_argument("loops", type=int)
+    pmdr.add_argument("-l", "--lock", action='store_true')
+    pmdr.add_argument("--breakf", action='store_false')
+    pmdr.set_defaults(func=parse_pomodoro)
+
+    # subparser for frozen (start frozen) command
+
+    # what else?
+    args = parser.parse_args()
+    args.func(args)
+
+if __name__ == "__main__":
+    main()
