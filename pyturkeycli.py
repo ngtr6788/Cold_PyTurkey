@@ -11,6 +11,13 @@ def main():
     func_parser = parser.add_subparsers(title="function")
 
     # subparser for start command
+    def parse_start(args):
+        pyturkey.start_block(args.blockname, args.minutes, args.lock)
+    pstart = func_parser.add_parser("start")
+    pstart.add_argument("blockname", type=str)
+    pstart.add_argument("-l", "--lock", action="store_true")
+    pstart.add_argument("minutes", type=int)
+    pstart.set_defaults(func=parse_start)
 
     # subparser for stop command
     def parse_stop(args):
