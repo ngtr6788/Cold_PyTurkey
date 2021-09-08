@@ -9,7 +9,7 @@ def main():
 
     # I made the top-level parser for the function type only.
     parser = argparse.ArgumentParser()
-    func_parser = parser.add_subparsers(prog="[pyturkey | python pyturkeycli.py]", title="function")
+    func_parser = parser.add_subparsers(prog="pyturkey", title="function")
 
     # subparser for start command
     """
