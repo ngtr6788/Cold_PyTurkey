@@ -6,6 +6,11 @@ _FROZEN = "frozen"
 
 def main():
     # TODO: Make a help string later. I just need it to work first.
+    def _blockprocess(blockname):
+        if _FROZEN == blockname:
+            return pyturkey.FROZEN_TURKEY
+        else:
+            return blockname
 
     # I made the top-level parser for the function type only.
     parser = argparse.ArgumentParser()
@@ -26,7 +31,7 @@ def main():
     
     # subparser for start for
     def parse_start(args):
-        pyturkey.start_block(args.blockname, args.minutes, args.lock)
+        pyturkey.start_block(_blockprocess(args.blockname), args.minutes, args.lock)
     pminutes = start_options.add_parser("for")
     pminutes.add_argument("minutes", type=int, default=0)
     pminutes.add_argument("-l", "--lock", action="store_true")
@@ -35,11 +40,11 @@ def main():
     # subparser for start until
     def parse_start_until(args):
         endtimeobj = datetime.time.fromisoformat(args.endtime)
-        enddateobj = pyturkey.today() if (args.enddate is None) else datetime.date.fromisocalendar(args.enddate)
+        enddateobj = pyturkey.today() if (args.enddate is None) else datetime.date.fromisoformat(args.enddate)
         enddatetime = datetime.datetime.combine(enddateobj, endtimeobj)
         startdatetime = pyturkey.now() if (args.startat is None) else datetime.datetime.fromisoformat(args.startat)
 
-        pyturkey.start_block_until(args.blockname, enddatetime, startdatetime)
+        pyturkey.start_block_until(_blockprocess(args.blockname), enddatetime, startdatetime)
 
     puntil = start_options.add_parser("until")   
     puntil.add_argument("endtime", type=str)
@@ -49,7 +54,7 @@ def main():
 
     # subparser for stop command
     def parse_stop(args):
-        pyturkey.stop_block(args.blockname)
+        pyturkey.stop_block(_blockprocess(args.blockname))
 
     ptoggle = func_parser.add_parser("stop")
     ptoggle.add_argument("blockname", type=str)
@@ -57,7 +62,7 @@ def main():
 
     # subparser for toggle command
     def parse_toggle(args):
-        pyturkey.toggle_block(args.blockname)
+        pyturkey.toggle_block(_blockprocess(args.blockname))
 
     ptoggle = func_parser.add_parser("toggle")
     ptoggle.add_argument("blockname", type=str)
@@ -65,7 +70,7 @@ def main():
 
     # subparser for add command
     def parse_add(args):
-        pyturkey.add_url(args.blockname, args.url, args.exception)
+        pyturkey.add_url(_blockprocess(args.blockname), args.url, args.exception)
 
     padd = func_parser.add_parser("add")
     padd.add_argument("blockname", type=str)
@@ -75,7 +80,7 @@ def main():
 
     # subparser for pomodoro command
     def parse_pomodoro(args):
-        pyturkey.pomodoro(args.blockname, args.blockmin, args.breakmin, args.breakf, args.loops, args.lock)
+        pyturkey.pomodoro(_blockprocess(args.blockname), args.blockmin, args.breakmin, args.breakf, args.loops, args.lock)
 
     pmdr = func_parser.add_parser("pomodoro")
     pmdr.add_argument("blockname", type=str)
