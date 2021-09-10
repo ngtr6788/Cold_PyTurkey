@@ -9,6 +9,8 @@ def main():
     def _blockprocess(blockname):
         if _FROZEN == blockname:
             return pyturkey.FROZEN_TURKEY
+        elif "internet" == blockname:
+            return "Entire Internet"
         else:
             return blockname
 
@@ -31,10 +33,10 @@ def main():
     
     # subparser for start for
     def parse_start(args):
-        pyturkey.start_block(_blockprocess(args.blockname), args.minutes, args.lock)
+        pyturkey.start_block(_blockprocess(args.blockname), args.minutes, args.nolock)
     pminutes = start_options.add_parser("for")
     pminutes.add_argument("minutes", type=int, default=0)
-    pminutes.add_argument("-l", "--lock", action="store_true")
+    pminutes.add_argument("-n", "--nolock", action="store_false")
     pminutes.set_defaults(func=parse_start)
 
     # subparser for start until
