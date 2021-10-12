@@ -5,7 +5,6 @@ from cold_pyturkey import FROZEN_TURKEY
 
 def main():
     day_sched = [[FROZEN_TURKEY, "00:00", "01:30"],
-                 [FROZEN_TURKEY, "19:00", "20:30"], # Dinner
                  [FROZEN_TURKEY, "23:00", "23:59:59"]]  # Bedtime
 
     pyturkey.schedule_blocks(day_sched)

@@ -1,0 +1,2 @@
+# Cold PyTurkey
+I decided to extend the functionality of Cold Turkey, a website blocking software (getcoldturkey.com). So far, I coded in Pomodoro timers and scheduling, and I improved the CLI interfact a little bit. I wish to add more features, but I'm super busy.

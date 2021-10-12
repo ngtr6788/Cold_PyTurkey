@@ -23,9 +23,10 @@ def main():
     ROUGH DRAFT OF HOW start WOULD WORK.
     you could either call
     start "Block Name"
-    start "Block Name" minutes (number) (-l)
-    start "Block Name" until (endtime) (enddate) --at (startdatetime)
-    if (date) is not mentioned, it's assumed to be today.
+    start "Block Name" --for (number) -n
+    start "Block Name" --until (time) --starttime (time)
+
+    NOTE TO SELF: Improve start function
     """
     pstart = func_parser.add_parser("start")
     pstart.add_argument("blockname", type=str)
