@@ -1,104 +1,61 @@
-import argparse
+import subprocess
+import sys
 import datetime
 import cold_pyturkey as pyturkey
+from cold_pyturkey import _COLD_TURKEY
 
 _FROZEN = "frozen"
 
-def main():
-    # TODO: Make a help string later. I just need it to work first.
-    def _blockprocess(blockname):
-        if _FROZEN == blockname:
-            return pyturkey.FROZEN_TURKEY
-        elif "internet" == blockname:
-            return "Entire Internet"
-        else:
-            return blockname
+def main(argv):
+    if len(argv) == 0:
+        # if just pyturkey, it opens Cold Turkey
+        subprocess.Popen(_COLD_TURKEY)
+    else: 
+        blockName = argv[1]
+        # parameters: pyturkey [start|stop|toggle|add|pomodoro]
+        if argv[0] == "start":
+            # pyturkey start [ (nothing) |for|until] 
+            if len(argv) == 2:
+                pyturkey.start_block(blockName, lock = False)
+            elif argv[2] == "for":
+                # pyturkey start blockname for duration
+                time = int(argv[3])
+                pyturkey.start_block(blockName, time)
+            elif argv[2] == "until":
+                # Parameter for until looks like
+                # pyturkey start blockname until time [date]
+                # if date is not mentioned, it's assumed to be today
+                time_end = datetime.time.fromisoformat(argv[3])
+                if len(argv) == 5:
+                    date_end = datetime.date.fromisoformat(argv[4])
+                else:
+                    date_end = datetime.date.today()
+                
+                datetime_end = datetime.datetime.combine(date_end, time_end)
+                pyturkey.start_block_until(blockName, datetime_end)
 
-    # I made the top-level parser for the function type only.
-    parser = argparse.ArgumentParser()
-    func_parser = parser.add_subparsers(prog="pyturkey", title="function")
+        elif argv[0] == "stop":
+            # pyturkey stop blockname
+            pyturkey.stop_block(blockName)
+        elif argv[0] == "toggle":
+            # pyturkey toggle blockname
+            pyturkey.toggle_block(blockName)
+        elif argv[0] == "add":
+            # pyturkey add blockname url (except)
+            url = argv[2]
+            exception = True if argv[3] == "except" else False
+            pyturkey.add_url(blockName, url, exception)
+        elif argv[0] == "pomodoro":
+            # Arguments for pomodoro
+            # pyturkey pomodoro block_name block_duration break_duration loops [-l|--lock] [-r|--break-first]
+            block_duration = int(argv[2])
+            break_duration = int(argv[3])
+            loops = int(argv[4])
 
-    # subparser for start command
-    """
-    ROUGH DRAFT OF HOW start WOULD WORK.
-    you could either call
-    start "Block Name"
-    start "Block Name" --for (number) -n
-    start "Block Name" --until (time) --starttime (time)
+            lock = True if ("-l" in argv or "--lock" in argv) else False
+            block_first = False if ("-r" in argv or "--break-first" in argv) else True
 
-    NOTE TO SELF: Improve start function
-    """
-    pstart = func_parser.add_parser("start")
-    pstart.add_argument("blockname", type=str)
-    start_options = pstart.add_subparsers(title="options")
-    
-    # subparser for start for
-    def parse_start(args):
-        pyturkey.start_block(_blockprocess(args.blockname), args.minutes, args.nolock)
-    pminutes = start_options.add_parser("for")
-    pminutes.add_argument("minutes", type=int, default=0)
-    pminutes.add_argument("-n", "--nolock", action="store_false")
-    pminutes.set_defaults(func=parse_start)
-
-    # subparser for start until
-    def parse_start_until(args):
-        endtimeobj = datetime.time.fromisoformat(args.endtime)
-        enddateobj = pyturkey.today() if (args.enddate is None) else datetime.date.fromisoformat(args.enddate)
-        enddatetime = datetime.datetime.combine(enddateobj, endtimeobj)
-        startdatetime = pyturkey.now() if (args.startat is None) else datetime.datetime.fromisoformat(args.startat)
-
-        pyturkey.start_block_until(_blockprocess(args.blockname), enddatetime, startdatetime)
-
-    puntil = start_options.add_parser("until")   
-    puntil.add_argument("endtime", type=str)
-    puntil.add_argument("--enddate", type=str, default=None)
-    puntil.add_argument("--startat", type=str, required=False, default=None)
-    puntil.set_defaults(func=parse_start_until)
-
-    # subparser for stop command
-    def parse_stop(args):
-        pyturkey.stop_block(_blockprocess(args.blockname))
-
-    ptoggle = func_parser.add_parser("stop")
-    ptoggle.add_argument("blockname", type=str)
-    ptoggle.set_defaults(func=parse_stop)
-
-    # subparser for toggle command
-    def parse_toggle(args):
-        pyturkey.toggle_block(_blockprocess(args.blockname))
-
-    ptoggle = func_parser.add_parser("toggle")
-    ptoggle.add_argument("blockname", type=str)
-    ptoggle.set_defaults(func=parse_toggle)
-
-    # subparser for add command
-    def parse_add(args):
-        pyturkey.add_url(_blockprocess(args.blockname), args.url, args.exception)
-
-    padd = func_parser.add_parser("add")
-    padd.add_argument("blockname", type=str)
-    padd.add_argument("url", type=str)
-    padd.add_argument("--exception", action="store_true")
-    padd.set_defaults(func = parse_add)
-
-    # subparser for pomodoro command
-    def parse_pomodoro(args):
-        pyturkey.pomodoro(_blockprocess(args.blockname), args.blockmin, args.breakmin, args.breakf, args.loops, args.lock)
-
-    pmdr = func_parser.add_parser("pomodoro")
-    pmdr.add_argument("blockname", type=str)
-    pmdr.add_argument("blockmin", type=int)
-    pmdr.add_argument("breakmin", type=int)
-    pmdr.add_argument("loops", type=int, default=1)
-    pmdr.add_argument("-l", "--lock", action='store_true')
-    pmdr.add_argument("--breakf", action='store_false')
-    pmdr.set_defaults(func=parse_pomodoro)
-
-    # subparser for frozen (start frozen) command
-
-    # what else?
-    args = parser.parse_args()
-    args.func(args)
+            pyturkey.pomodoro(blockName, block_duration, break_duration, block_first, loops, lock)
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])

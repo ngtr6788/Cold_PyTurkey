@@ -4,10 +4,12 @@ import cold_pyturkey as pyturkey
 from cold_pyturkey import FROZEN_TURKEY
 
 def main():
-    day_sched = [[FROZEN_TURKEY, "00:00", "01:30"],
-                 [FROZEN_TURKEY, "23:00", "23:59:59"]]  # Bedtime
+    # day_sched = [[FROZEN_TURKEY, "00:00", "01:30"],
+                 # [FROZEN_TURKEY, "23:00", "23:59:59"]]  # Bedtime
 
-    pyturkey.schedule_blocks(day_sched)
+    # pyturkey.schedule_blocks(day_sched)
+
+    pyturkey.pomodoro(FROZEN_TURKEY, 15, 90, False, 1, True)
 
 if __name__ == "__main__":
     main()
