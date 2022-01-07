@@ -1,7 +1,7 @@
 # This program demonstrates the function schedule_blocks from pyturkey
 
-import cold_pyturkey as pyturkey
-from cold_pyturkey import FROZEN_TURKEY
+import pyturkey
+from pyturkey import FROZEN_TURKEY
 
 def main():
     # day_sched = [[FROZEN_TURKEY, "00:00", "01:30"],

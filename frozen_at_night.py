@@ -1,5 +1,5 @@
 #!usr/bin/env python3
-import cold_pyturkey as pyturkey
+import pyturkey
 
 def main():
     pyturkey.frozen_at_night("22:45")
