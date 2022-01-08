@@ -9,6 +9,7 @@ Usage:
   pyturkey add <block_name> <url> [-ewh]
   pyturkey toggle <block_name> [-wh]
   pyturkey pomodoro <block_name> <block_minutes> <break_minutes> --loops=LOOPS [-btwh]
+  pyturkey suggest
 
 Options:
   -h --help         Show this screen.
@@ -20,6 +21,8 @@ Options:
 """
 
 # Thanks to the docopt library provided by Vladimir Keleshev (check out https://github.com/docopt/docopt), I can simply rewrite pyturkeycli.py in a much, much simpler way, not to mention a free help thing
+
+# UPDATE: Apparently, this library is not maintained for a few years now. However, it's a personal project for myself, I'm not TOO worried about it right now. If I will need to display it to the world, I will really need to fix it.
 
 import pyturkey
 from pyturkey import _COLD_TURKEY, FROZEN_TURKEY
@@ -149,6 +152,8 @@ def run(args_dict):
             print(
                 "\n\nPomodoro timer has stopped. However, be aware of any unfinished blocks as pyturkey is unable to stop it."
             )
+    elif args_dict["suggest"]:
+        pass
     else:
         subprocess.Popen(_COLD_TURKEY)
 
