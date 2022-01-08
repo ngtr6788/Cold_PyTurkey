@@ -44,19 +44,15 @@ def start_block(block_name: str, minutes: int = 0):
     If minutes > 0, the lock will be automatically locked and it
     will automatically block for given number of minutes
 
-    If minutes = 0 (or you can give one argument - block_name, since 
-    it's an optional parameter), it will block unlocked
-
-    Raises a ValueError if minutes < 0"""
+    If minutes <= 0 (or you can give one argument - block_name, since 
+    it's an optional parameter), it will block unlocked"""
 
     if minutes > 0:
         TIME_STATUS = str(minutes)
         LOCK_STATUS = _LOCK
-    elif minutes == 0:
+    else:
         TIME_STATUS = ""
         LOCK_STATUS = ""
-    else:
-        raise ValueError("minutes should not be less than 0")
 
     subprocess.run(
         f'{_COLD_TURKEY} -{_START} "{block_name}" {LOCK_STATUS} {TIME_STATUS}')

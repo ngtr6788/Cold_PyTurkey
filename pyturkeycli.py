@@ -1,155 +1,123 @@
+"""pyturkey, a better CLI interface for Cold Turkey, written in Python
+
+Usage:
+  pyturkey [-wh]
+  pyturkey start <block_name> [-wh]
+  pyturkey start <block_name> for <minutes> [-wh]
+  pyturkey start <block_name> until <time> [<date>] [-wh]
+  pyturkey stop <block_name> [-wh]
+  pyturkey add <block_name> <url> [-ewh]
+  pyturkey toggle <block_name> [-wh]
+  pyturkey pomodoro <block_name> <block_minutes> <break_minutes> --loops=LOOPS [-btwh]
+
+Options:
+  -h --help         Show this screen.
+  -w --warning      Displays non-deadly warning messages
+  -e --except       Adds <url> as an exception
+  -b --break-first  Starts the pomodoro with the block name unblocked first
+  -t --timer        Displays a countdown pomodoro timer 
+  --loops=LOOPS     Number of loops in a pomodoro session
+"""
+
+# Thanks to the docopt library provided by Vladimir Keleshev (check out https://github.com/docopt/docopt), I can simply rewrite pyturkeycli.py in a much, much simpler way, not to mention a free help thing
+
+import pyturkey
+from pyturkey import _COLD_TURKEY, FROZEN_TURKEY
+
+from docopt import docopt
 import subprocess
 import sys
-import time
-import datetime
-import pyturkey
-from pyturkey import _COLD_TURKEY
+import time, datetime
 import json
 from pathlib import Path
 import math
 
-_FROZEN = "frozen"
 
-"""How to type in the commands
+def run(args_dict):
+    block_name = args_dict["<block_name>"]
+    block_name = FROZEN_TURKEY if block_name == "frozen" else block_name
+    warning = args_dict["--warning"]
 
-To open Cold Turkey
-$ pyturkey
+    # Here, we're looking for one single .ctbbl file, primarily
+    # so we can assist the client with whether or not
+    # the block name exists in Cold Turkey or not
+    all_ctbbl_files = list(Path(".").glob("**/*.ctbbl"))
 
-To start a block:
-$ pyturkey start <block_name> [for <minutes> | until <time> [<date>]] 
-If <date> is not written, it is assumed to be today, 
-
-To stop a block:
-$ pyturkey stop <block_name>
-
-To add a URL to a block:
-$ pyturkey add <block_name> <url> [-e | --except]
-
-To toggle a block:
-$ pyturkey toggle <block_name>
-
-To start a pomodoro block
-$ pyturkey pomodoro <block_name> <block_minutes> <break_minutes> <loops> [-b | --break-first] 
-
-Options:
-    -e --except Add a url in the exceptions list
-    -b --break-first For the pomodoro, you don't block first.
-    -w --warnings Enable some head-up messages to help you with pyturkey
-"""
-
-
-def main(argv):
-    # This is where we read the arguments
-    if len(argv) == 0:
-        # if just pyturkey, it opens Cold Turkey
-        subprocess.Popen(_COLD_TURKEY)
+    len_ctbbl = len(all_ctbbl_files)
+    block_info = None
+    if len_ctbbl == 1:
+        with all_ctbbl_files[0].open() as block_json:
+            block_info = json.load(block_json)
+    elif len_ctbbl == 0:
+        if warning:
+            print(
+                "No .ctbbl file found, however, not to fret. That file is optional. It's there to help you with pyturkey"
+            )
     else:
-        # This section deals with parsing the tags and non-tags
-        def is_tag(arg):
-            return arg[0] == "-"
+        if warning:
+            print(
+                "There are too many .ctbbl files in there, but not to fret. Just provide one .ctbbl file that best reflects the actual blocks in Cold Turkey"
+            )
 
-        # Find all tags
-        tags = list(filter(is_tag, argv))
-        # Find all arguments that aren't tags, hence the special lambda function
-        tagless_argv = list(filter(lambda x: not is_tag(x), argv))
+    # Here, we use the information from the .ctbbl to aid
+    # us a little whether the block name is in Cold Turkey GUI or not
+    if not block_info is None:
+        isNot = " " if block_name in block_info else " not "
+        if warning:
+            print(
+                f"The block name you provided is probably{isNot}in your Cold Turkey app.\n"
+            )
 
-        blockName = tagless_argv[1]
+            print(
+                "Your .ctbbl does not always reflect the actual blocks in your Cold Turkey. For best results, make sure that your .ctbbl file matches the information on your Cold Turkey so pyturkey can better help you.\n"
+            )
 
-        warning = "-w" in tags or "--warnings" in tags
+    if args_dict["start"]:
+        if args_dict["for"]:
+            block_duration = int(args_dict["<minutes>"])
+            pyturkey.start_block(block_name, block_duration)
+        elif args_dict["until"]:
+            # if date is not mentioned, assume today
+            time_end = datetime.time.fromisoformat(args_dict["<time>"])
+            if not args_dict["<date>"] is None:
+                date_end = datetime.date.fromisoformat(args_dict["<date>"])
+            else:
+                date_end = datetime.date.today()
 
-        # Here, we're looking for one single .ctbbl file, primarily
-        # so we can assist the client with whether or not
-        # the block name exists in Cold Turkey or not
-        all_ctbbl_files = list(Path(".").glob("**/*.ctbbl"))
+            # create a datetime to pass into start_block_until
+            datetime_end = datetime.datetime.combine(date_end, time_end)
 
-        len_ctbbl = len(all_ctbbl_files)
-        block_info = None
-        if len_ctbbl == 1:
-            with all_ctbbl_files[0].open() as block_json:
-                block_info = json.load(block_json)
-        elif len_ctbbl == 0:
-            if warning:
-                print(
-                    "No .ctbbl file found, however, not to fret. That file is optional. It's there to help you with pyturkey")
+            pyturkey.start_block_until(block_name, datetime_end)
         else:
-            if warning:
-                print("There are too many .ctbbl files in there, but not to fret. Just provide one .ctbbl file that best reflects the actual blocks in Cold Turkey")
+            pyturkey.start_block(block_name)
+    elif args_dict["stop"]:
+        pyturkey.stop_block(block_name)
+    elif args_dict["toggle"]:
+        pyturkey.toggle_block(block_name)
+    elif args_dict["add"]:
+        exception = args_dict["--except"]
+        url = args_dict["<url>"]
+        pyturkey.add_url(block_name, url, exception)
+    elif args_dict["pomodoro"]:
+        try:
+            break_first = args_dict["--break-first"]
 
-        # Here, we use the information from the .ctbbl to aid
-        # us a little whether the block name is in Cold Turkey GUI or not
-        if (not block_info is None):
-            isNot = " " if blockName in block_info else " not "
-            if warning:
-                print(
-                    f"The block name you provided is probably{isNot}in your Cold Turkey app.\n")
+            block_duration = int(args_dict["<block_minutes>"])
+            break_duration = int(args_dict["<break_minutes>"])
+            loops = int(args_dict["--loops"])
 
-                print("Your .ctbbl does not always reflect the actual blocks in your Cold Turkey. For best results, make sure that your .ctbbl file matches the information on your Cold Turkey so pyturkey can better help you.\n")
-
-        if tagless_argv[0] == "start":
-            # pyturkey start <blockname> [for|until]
-            if len(tagless_argv) == 2:
-                # pyturkey start <blockname>
-                pyturkey.start_block(blockName)
-            elif tagless_argv[2] == "for":
-                # pyturkey start <blockname> for <duration>
-                duration = int(tagless_argv[3])
-                pyturkey.start_block(blockName, duration)
-            elif tagless_argv[2] == "until":
-                # pyturkey start <blockname> until <time> [<date>]
-
-                # if date is not mentioned, it's assumed to be today
-                time_end = datetime.time.fromisoformat(tagless_argv[3])
-                if len(tagless_argv) == 5:
-                    date_end = datetime.date.fromisoformat(tagless_argv[4])
-                else:
-                    date_end = datetime.date.today()
-
-                # create a datetime to pass into start_block_until
-                datetime_end = datetime.datetime.combine(
-                    date_end, time_end)
-
-                pyturkey.start_block_until(blockName, datetime_end)
-
-        elif tagless_argv[0] == "stop":
-            # pyturkey stop <blockname>
-            pyturkey.stop_block(blockName)
-        elif tagless_argv[0] == "toggle":
-            # pyturkey toggle <blockname>
-            pyturkey.toggle_block(blockName)
-        elif tagless_argv[0] == "add":
-            # pyturkey add <blockname> <url> [-e | except]
-            exception = True if (
-                "-e" in tags or "--except" in tags) else False
-
-            url = tagless_argv[2]
-
-            pyturkey.add_url(blockName, url, exception)
-        elif tagless_argv[0] == "pomodoro":
-            try:
-                # Arguments for pomodoro
-                # pyturkey pomodoro <block_name> <block_duration> <break_duration> <loops> [-r|--break-first]
-
-                break_first = True if (
-                    "-b" in tags or "--break-first" in tags) else False
-
-                block_duration = int(tagless_argv[2])
-                break_duration = int(tagless_argv[3])
-                loops = int(tagless_argv[4])
-
-                # pyturkey.pomodoro(blockName, block_duration,
-                #                   break_duration, loops, break_first)
-
+            if args_dict["--timer"]:
                 block_session = not break_first
 
                 now_func = datetime.datetime.now
 
                 for i in range(2 * loops):
                     if block_session:
-                        pyturkey.start_block(blockName, block_duration)
+                        pyturkey.start_block(block_name, block_duration)
                         duration = block_duration
                         session_type = "Block session"
                     else:
-                        pyturkey.stop_block(blockName)
+                        pyturkey.stop_block(block_name)
                         duration = break_duration
                         session_type = "Break session"
 
@@ -166,15 +134,25 @@ def main(argv):
                         sys.stdout.write(f"Loop #{i // 2 + 1} ")
                         sys.stdout.write(session_type)
                         sys.stdout.write(
-                            f" {min_remain} min {sec_remain} s remaining   ")
+                            f" {min_remain} min {sec_remain} s remaining   "
+                        )
                         sys.stdout.flush()
                         time.sleep(1)
 
                     block_session = not block_session
-            except KeyboardInterrupt:
-                print(
-                    "\n\nPomodoro timer has stopped. However, be aware of any unfinished blocks as pyturkey is unable to stop it.")
+            else:
+                pyturkey.pomodoro(
+                    block_name, block_duration, break_duration, loops, break_first
+                )
+
+        except KeyboardInterrupt:
+            print(
+                "\n\nPomodoro timer has stopped. However, be aware of any unfinished blocks as pyturkey is unable to stop it."
+            )
+    else:
+        subprocess.Popen(_COLD_TURKEY)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    args_dict = docopt(__doc__)
+    run(args_dict)
