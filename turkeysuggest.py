@@ -10,6 +10,11 @@
   suggest nobreak <block_name>
   suggest pomodoro <block_name> <block_minutes> <break_minutes>
   suggest allowance <block_name> <minutes>
+  suggest add <block_name> web <url> [-e]
+  suggest add <block_name> file <path>
+  suggest add <block_name> folder <path>
+  suggest add <block_name> win10 <path>
+  suggest add <block_name> title <path>
   suggest settings <block_name>
   suggest blocks [-v]
   suggest save
@@ -19,6 +24,7 @@ Options:
   -u --unlocked     Block is unlocked between time range (default is locked)
   -l --lock         Simultaneously locks with that type and configures it
   -v --verbose      Displays all blocks as well as each block's settings
+  -e --except       Adds a URL as an exception
 """
 
 import re
@@ -152,6 +158,30 @@ def main():
         block_dict["break"] = "none"
         print(f"Block {block_name} has no breaks")
 
+    def add_url(block_name, block_dict, dict_args):
+        url = dict_args["<url>"]
+        exception = dict_args["--except"]
+        if exception:
+            category = "exceptions"
+        else:
+            category = "web"
+        block_dict[category].append(url)
+        print(
+            f"Added {url} {'as an exception ' if exception else ''}to block {block_name}"
+        )
+
+    def add_applications(block_name, block_dict, dict_args):
+        # NOTE: This implementation is very Windows specific.
+        # I do not own a Mac, so I have no idea how it might look
+
+        path_name = dict_args["<path>"]
+        for type in ["title", "win10", "folder", "file"]:
+            if dict_args[type]:
+                # create a path name with forward slashes
+                path_name = Path(path_name).as_posix()  
+                block_dict["apps"].append(f"{type}:{path_name}")
+                print(f"Added {path_name} as {type} to block {block_name}")
+
     # print(DEFAULT_SETTINGS)
 
     while True:
@@ -234,6 +264,14 @@ def main():
 
             elif dict_args["nobreak"]:
                 set_nobreak(block_name, block_dict, dict_args)
+
+            if dict_args["add"]:
+                if dict_args["web"]:
+                    add_url(block_name, block_dict, dict_args)
+                else:
+                    # NOTE: I use Windows, so I don't know how
+                    # one might implement this with Mac applications
+                    add_applications(block_name, block_dict, dict_args)
 
         except KeyboardInterrupt:
             try:
