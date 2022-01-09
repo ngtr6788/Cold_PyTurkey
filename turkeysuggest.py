@@ -235,7 +235,31 @@ def main():
             elif dict_args["nobreak"]:
                 set_nobreak(block_name, block_dict, dict_args)
 
-        except (EOFError, KeyboardInterrupt):
+        except KeyboardInterrupt:
+            try:
+                wants_exit = False
+                while True:
+                    sure_exit = input(
+                        "Are you sure you want to exit? Any unsaved settings will be lost. (Y/N) "
+                    )
+
+                    if sure_exit in ["Y", "y"]:
+                        wants_exit = True
+                        break
+                    elif sure_exit in ["N", "n"]:
+                        wants_exit = False
+                        break
+                    else:
+                        continue
+
+                if wants_exit:
+                    break
+                else:
+                    continue
+
+            except KeyboardInterrupt:
+                break
+        except EOFError:
             break
 
 
