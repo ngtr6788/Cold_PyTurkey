@@ -28,6 +28,7 @@ from getpass import getpass
 import random
 from pathlib import Path
 from copy import deepcopy
+import shlex
 
 DEFAULT_SETTINGS = {
     "enabled": "false",
@@ -156,7 +157,7 @@ def main():
     while True:
         try:
             stdin_args = input("> suggest ")
-            stdin_args = stdin_args.split(" ")
+            stdin_args = shlex.split(stdin_args)
             try:
                 dict_args = docopt(__doc__, argv=stdin_args, help=True)
             except:
@@ -166,7 +167,7 @@ def main():
                 continue
 
             if dict_args.get("quit") or dict_args.get("q"):
-                break
+                raise KeyboardInterrupt
 
             if dict_args["blocks"]:
                 print_keys(dict_args["--verbose"])
@@ -226,8 +227,6 @@ def main():
                     f"Block {block_name} has been locked by {lock_method} on settings"
                 )
 
-            # I don't know how Cold Turkey sets pomodoro in its
-            # json files yet, so I'll leave it alone for now
             if dict_args["pomodoro"]:
                 set_pomodoro(block_name, block_dict, dict_args)
             elif dict_args["allowance"]:
