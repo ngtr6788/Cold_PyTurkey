@@ -34,6 +34,7 @@ import time, datetime
 import json
 from pathlib import Path
 import math
+import turkeysuggest
 
 
 def run(args_dict):
@@ -153,7 +154,7 @@ def run(args_dict):
                 "\n\nPomodoro timer has stopped. However, be aware of any unfinished blocks as pyturkey is unable to stop it."
             )
     elif args_dict["suggest"]:
-        pass
+        turkeysuggest.main()
     else:
         subprocess.Popen(_COLD_TURKEY)
 
