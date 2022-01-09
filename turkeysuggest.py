@@ -10,21 +10,18 @@
   suggest nobreak <block_name>
   suggest pomodoro <block_name> <block_minutes> <break_minutes>
   suggest allowance <block_name> <minutes>
-  suggest add <block_name> web <url> [-e]
-  suggest add <block_name> file <path>
-  suggest add <block_name> folder <path>
-  suggest add <block_name> win10 <path>
-  suggest add <block_name> title <path>
+  suggest (add | delete) <block_name> web <url> [-e]
+  suggest (add | delete) <block_name> (file | folder | win10 | title) <path>
   suggest settings <block_name>
   suggest blocks [-v]
-  suggest save
+  suggest save [<file_name>]
   suggest (q | quit)
 Options:
-  --no-unlock       Does not automatically unlock block after a restart
-  -u --unlocked     Block is unlocked between time range (default is locked)
-  -l --lock         Simultaneously locks with that type and configures it
-  -v --verbose      Displays all blocks as well as each block's settings
-  -e --except       Adds a URL as an exception
+  --no-unlock     Does not automatically unlock block after a restart
+  -u --unlocked   Block is unlocked between time range (default is locked)
+  -l --lock       Simultaneously locks with that type and configures it
+  -v --verbose    Displays all blocks as well as each block's settings
+  -e --except     Adds a URL as an exception
 """
 
 import re
@@ -68,17 +65,20 @@ def main():
                 print(key)
 
     def save_to_ctbbl():
+        file_name = dict_args["<file_name>"]
 
-        # This is to avoid naming conflicts.
-        maximum = 10 ** 10
-        all_ctbbl_files = list(Path(".").glob("**/*.ctbbl"))
-
-        random_no = random.randint(1, maximum)
-        file_name = f"suggestions_{random_no}.ctbbl"
-        while file_name in all_ctbbl_files:
+        if file_name is None:
+            # This is to avoid naming conflicts.
+            maximum = 10 ** 10
+            all_ctbbl_files = list(Path(".").glob("**/*.ctbbl"))
             random_no = random.randint(1, maximum)
             file_name = f"suggestions_{random_no}.ctbbl"
-        # end of naming conflicts
+            while file_name in all_ctbbl_files:
+                random_no = random.randint(1, maximum)
+                file_name = f"suggestions_{random_no}.ctbbl"
+            # end of naming conflicts
+        else:
+            file_name = f"{file_name}"
 
         # we write our dictionary in json format
         with open(file_name, "w") as suggest_file:
@@ -158,19 +158,29 @@ def main():
         block_dict["break"] = "none"
         print(f"Block {block_name} has no breaks")
 
-    def add_url(block_name, block_dict, dict_args):
+    def manage_url(block_name, block_dict, dict_args, make_exist):
         url = dict_args["<url>"]
         exception = dict_args["--except"]
         if exception:
             category = "exceptions"
         else:
             category = "web"
-        block_dict[category].append(url)
-        print(
-            f"Added {url} {'as an exception ' if exception else ''}to block {block_name}"
-        )
 
-    def add_applications(block_name, block_dict, dict_args):
+        if make_exist:
+            # Add url
+            block_dict[category].append(url)
+            print(
+                f"Added {url} {'as an exception ' if exception else ''}to block {block_name}"
+            )
+        else:
+            # Remove url
+            try:
+                block_dict[category].remove(url)
+                print(f"Removed {url} from {block_name}")
+            except ValueError:
+                print(f"{url} does not exit in {block_name}")
+
+    def manage_apps(block_name, block_dict, dict_args, make_exist):
         # NOTE: This implementation is very Windows specific.
         # I do not own a Mac, so I have no idea how it might look
 
@@ -178,16 +188,31 @@ def main():
         for type in ["title", "win10", "folder", "file"]:
             if dict_args[type]:
                 # create a path name with forward slashes
-                path_name = Path(path_name).as_posix()  
-                block_dict["apps"].append(f"{type}:{path_name}")
-                print(f"Added {path_name} as {type} to block {block_name}")
+                path_name = Path(path_name).as_posix()
+                turkey_path = f"{type}:{path_name}"
+
+                if make_exist:
+                    # add url
+                    block_dict["apps"].append(turkey_path)
+                    print(f"Added {path_name} as {type} to block {block_name}")
+                else:
+                    # remove url
+                    try:
+                        block_dict["apps"].remove(turkey_path)
+                        print(f"Removed {path_name} from {block_name}")
+                    except:
+                        print(f"{path_name} does not exit in {block_name}")
 
     # print(DEFAULT_SETTINGS)
 
     while True:
         try:
             stdin_args = input("> suggest ")
-            stdin_args = shlex.split(stdin_args)
+            try:
+                stdin_args = shlex.split(stdin_args)
+            except:
+                print("Invalid parsing of arguments")
+                continue
             try:
                 dict_args = docopt(__doc__, argv=stdin_args, help=True)
             except:
@@ -265,13 +290,18 @@ def main():
             elif dict_args["nobreak"]:
                 set_nobreak(block_name, block_dict, dict_args)
 
+            create = False
             if dict_args["add"]:
-                if dict_args["web"]:
-                    add_url(block_name, block_dict, dict_args)
-                else:
-                    # NOTE: I use Windows, so I don't know how
-                    # one might implement this with Mac applications
-                    add_applications(block_name, block_dict, dict_args)
+                create = True
+            elif dict_args["delete"]:
+                create = False
+
+            if dict_args["web"]:
+                manage_url(block_name, block_dict, dict_args, create)
+            else:
+                # NOTE: I use Windows, so I don't know how
+                # one might implement this with Mac applications
+                manage_apps(block_name, block_dict, dict_args, create)
 
         except KeyboardInterrupt:
             try:
