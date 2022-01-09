@@ -3,21 +3,22 @@
   suggest remove <block_name>
   suggest unlock <block_name>
   suggest lock <block_name> (random | range | restart | password)
-  suggest set <block_name> random <length> [-l]
-  suggest set <block_name> range <start_time> <end_time> [-ul]
-  suggest set <block_name> restart [--no-unlock] [-l]
-  suggest set <block_name> password [-l]
+  suggest config <block_name> random <length> [-l]
+  suggest config <block_name> range <start_time> <end_time> [-ul]
+  suggest config <block_name> restart [--no-unlock] [-l]
+  suggest config <block_name> password [-l]
   suggest nobreak <block_name>
   suggest pomodoro <block_name> <block_minutes> <break_minutes>
   suggest allowance <block_name> <minutes>
   suggest settings <block_name>
-  suggest blocks
+  suggest blocks [-v]
   suggest save
   suggest (q | quit)
 Options:
   --no-unlock       Does not automatically unlock block after a restart
   -u --unlocked     Block is unlocked between time range (default is locked)
-  -l --lock         Simultaneously configures and sets the lock type (no -l set + lock)
+  -l --lock         Simultaneously locks with that type and configures it
+  -v --verbose      Displays all blocks as well as each block's settings
 """
 
 import re
@@ -28,19 +29,17 @@ import random
 from pathlib import Path
 from copy import deepcopy
 
-DEFAULT_STR = """{"enabled":"false","type":"continuous","startTime":"","lock":"none","lockUnblock":"true","restartUnblock":"true","break":"none","password":"","randomTextLength":"30","window":"lock@9,0@17,0","users":"all","web":[],"exceptions":[],"apps":[],"schedule":[],"customUsers":[]}}"""
-
 DEFAULT_SETTINGS = {
-    "enabled": False,
+    "enabled": "false",
     "type": "continuous",
     "timer": "",
     "startTime": "",
     "lock": "none",
-    "lockUnblock": True,
-    "restartUnblock": True,
+    "lockUnblock": "true",
+    "restartUnblock": "true",
     "break": "none",
     "password": "",
-    "randomTextLength": 30,
+    "randomTextLength": "30",
     "window": "lock@9,0@17,0",
     "users": "all",
     "web": [],
@@ -54,9 +53,12 @@ DEFAULT_SETTINGS = {
 def main():
     dict_suggestions = dict()
 
-    def print_keys():
-        for key in dict_suggestions.keys():
-            print(key)
+    def print_keys(verbose):
+        if verbose:
+            print(json.dumps(dict_suggestions, indent=2))
+        else:
+            for key in dict_suggestions.keys():
+                print(key)
 
     def save_to_ctbbl():
 
@@ -121,7 +123,7 @@ def main():
 
     def config_restart(block_name, block_dict, dict_args):
         no_unlock = dict_args["--no-unlock"]  # should it be bool?
-        block_dict["restartUnblock"] = no_unlock
+        block_dict["restartUnblock"] = "true" if no_unlock else "false"
         out = "out" if no_unlock else ""
         print(
             f"Block {block_name} set to be locked until restart, with{out} auto-unlock"
@@ -155,13 +157,19 @@ def main():
         try:
             stdin_args = input("> suggest ")
             stdin_args = stdin_args.split(" ")
-            dict_args = docopt(__doc__, argv=stdin_args, help=False)
+            try:
+                dict_args = docopt(__doc__, argv=stdin_args, help=True)
+            except:
+                # Here, I probably typed something wrong. This try
+                # except block is here so that if invalid parameters,
+                # it doesn't quit
+                continue
 
             if dict_args.get("quit") or dict_args.get("q"):
                 break
 
             if dict_args["blocks"]:
-                print_keys()
+                print_keys(dict_args["--verbose"])
                 continue
 
             if dict_args["save"]:
@@ -187,7 +195,10 @@ def main():
             if dict_args["settings"]:
                 print(json.dumps(block_dict, indent=2))
 
-            set_mode = dict_args["set"]
+            if dict_args["unlock"]:
+                block_dict["lock"] = "none"
+
+            config_mode = dict_args["config"]
             lock_mode = dict_args["lock"] or dict_args["--lock"]
 
             if dict_args["random"]:
@@ -206,7 +217,7 @@ def main():
                 lock_method = "password"
                 config_method = config_password
 
-            if set_mode:
+            if config_mode:
                 config_method(block_name, block_dict, dict_args)
 
             if lock_mode:
