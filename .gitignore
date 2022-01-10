@@ -138,6 +138,6 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# Cold Turkey specific stuff
+# Cold Turkey-specific files
 *.ctbbl
-*.ctbal
+*.ctbal 
