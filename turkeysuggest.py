@@ -53,6 +53,8 @@ DEFAULT_SETTINGS = {
     "customUsers": [],
 }
 
+# TODO: Added more helpful comments and test this thing
+
 
 def main():
     dict_suggestions = dict()
@@ -64,7 +66,7 @@ def main():
             for key in dict_suggestions.keys():
                 print(key)
 
-    def save_to_ctbbl():
+    def save_to_ctbbl(dict_args):
         file_name = dict_args["<file_name>"]
 
         if file_name is None:
@@ -78,7 +80,7 @@ def main():
                 file_name = f"suggestions_{random_no}.ctbbl"
             # end of naming conflicts
         else:
-            file_name = f"{file_name}"
+            file_name = f"{file_name}.ctbbl"
 
         # we write our dictionary in json format
         with open(file_name, "w") as suggest_file:
@@ -98,6 +100,10 @@ def main():
     def remove_block(block_name):
         dict_suggestions.pop(block_name)
         print(f"Block {block_name} deleted")
+
+    def unlock_block(block_name, block_dict):
+        block_dict["lock"] = "none"
+        print(f"Block {block_name} unlocked")
 
     def config_random(block_name, block_dict, dict_args):
         length = dict_args["<length>"]  # should it be int?
@@ -229,7 +235,7 @@ def main():
                 continue
 
             if dict_args["save"]:
-                save_to_ctbbl()
+                save_to_ctbbl(dict_args)
                 continue
 
             block_name = dict_args["<block_name>"]
@@ -252,7 +258,7 @@ def main():
                 print(json.dumps(block_dict, indent=2))
 
             if dict_args["unlock"]:
-                block_dict["lock"] = "none"
+                unlock_block(block_name, block_dict)
 
             config_mode = dict_args["config"]
             lock_mode = dict_args["lock"] or dict_args["--lock"]

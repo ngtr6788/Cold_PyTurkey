@@ -9,14 +9,14 @@ from typing import List, Tuple
 import copy
 
 _COLD_TURKEY = r'"C:\Program Files\Cold Turkey\Cold Turkey Blocker.exe"'
-_START = 'start'
-_STOP = 'stop'
-_ADD = 'add'
-_TOGGLE = 'toggle'
+_START = "start"
+_STOP = "stop"
+_ADD = "add"
+_TOGGLE = "toggle"
 
-_LOCK = '-lock'
-_WEB = 'web'
-_EXCEPTION = 'exception'
+_LOCK = "-lock"
+_WEB = "web"
+_EXCEPTION = "exception"
 
 SEC_PER_MIN = 60
 MIN_PER_HOUR = 60
@@ -44,7 +44,7 @@ def start_block(block_name: str, minutes: int = 0):
     If minutes > 0, the lock will be automatically locked and it
     will automatically block for given number of minutes
 
-    If minutes <= 0 (or you can give one argument - block_name, since 
+    If minutes <= 0 (or you can give one argument - block_name, since
     it's an optional parameter), it will block unlocked"""
 
     if minutes > 0:
@@ -55,15 +55,18 @@ def start_block(block_name: str, minutes: int = 0):
         LOCK_STATUS = ""
 
     subprocess.run(
-        f'{_COLD_TURKEY} -{_START} "{block_name}" {LOCK_STATUS} {TIME_STATUS}')
+        f'{_COLD_TURKEY} -{_START} "{block_name}" {LOCK_STATUS} {TIME_STATUS}'
+    )
+
 
 # This is my implementation of blocking up to a certain time, like Cold Turkey
 
 
-def start_block_until(block_name: str, end_time: datetime.datetime,
-                      start_time: datetime.datetime = now()):
+def start_block_until(
+    block_name: str, end_time: datetime.datetime, start_time: datetime.datetime = now()
+):
     """Blocks a given block_name from the optional start_time to end_time.
-    end_time and start_time can be either in ISO format or datetime object. """
+    end_time and start_time can be either in ISO format or datetime object."""
     working_end_time = _convert_to_datetime(end_time)
     working_start_time = _convert_to_datetime(start_time)
 
@@ -71,8 +74,7 @@ def start_block_until(block_name: str, end_time: datetime.datetime,
         time.sleep(1)
 
     block_duration = working_end_time - now()
-    block_min_duration = math.ceil(
-        block_duration.total_seconds() / SEC_PER_MIN)
+    block_min_duration = math.ceil(block_duration.total_seconds() / SEC_PER_MIN)
 
     start_block(block_name, block_min_duration)
 
@@ -90,14 +92,18 @@ def toggle_block(block_name: str):
 def add_url(block_name: str, url: str, exception: bool = False):
     """Adds the URL into the block, either as a blocked site or exception"""
     where_add = _EXCEPTION if exception else _WEB
-    subprocess.run(
-        f'{_COLD_TURKEY} -{_ADD} "{block_name}" -{where_add} "{url}"')
+    subprocess.run(f'{_COLD_TURKEY} -{_ADD} "{block_name}" -{where_add} "{url}"')
 
 
-def pomodoro(block_name: str, block_min: int, break_min: int,
-             loops: int = 1, break_first: bool = False):
+def pomodoro(
+    block_name: str,
+    block_min: int,
+    break_min: int,
+    loops: int = 1,
+    break_first: bool = False,
+):
     """
-    This emulates the pomodoro timer, blocking the block_name for a few minutes and 
+    This emulates the pomodoro timer, blocking the block_name for a few minutes and
     unlocks it for a few minutes. You can also choose to have the block unlocked first
     and loop over and over.
 
@@ -134,6 +140,7 @@ def frozen_pomodoro(work_min: int, frozen_min: int, loops: int = 1):
     for i in range(loops):
         pomodoro(FROZEN_TURKEY, frozen_min, work_min, loops, break_first=True)
 
+
 # These will be called the night Frozen block functions.
 
 
@@ -146,14 +153,12 @@ def frozen_at_night(set_time):
     if TEN_THIRTY <= start_block_time <= MILLISEC_BEFORE_MIDNIGHT:
         if MIDNIGHT <= now().time() < ONE_THIRTY:
             today_date = today()
-            one_thirty_today = datetime.datetime.combine(
-                today_date, ONE_THIRTY)
+            one_thirty_today = datetime.datetime.combine(today_date, ONE_THIRTY)
             start_block_until(FROZEN_TURKEY, one_thirty_today)
         else:
             today_date = today()
             tomorrow = today_date + datetime.timedelta(days=1)
-            one_thirty_tomorrow = datetime.datetime.combine(
-                tomorrow, ONE_THIRTY)
+            one_thirty_tomorrow = datetime.datetime.combine(tomorrow, ONE_THIRTY)
             set_datetime = datetime.datetime.combine(today, start_block_time)
             start_block_until(FROZEN_TURKEY, one_thirty_tomorrow, set_datetime)
     else:
@@ -166,7 +171,7 @@ def frozen_at_midnight():
     it to run at midnight."""
 
     today_date = today()
-    if (MIDNIGHT <= now().time() < ONE_THIRTY):
+    if MIDNIGHT <= now().time() < ONE_THIRTY:
         working_date = today_date
     else:
         tomorrow = today_date + datetime.timedelta(days=1)
@@ -181,7 +186,7 @@ def schedule_blocks(schedule):
     """Schedules a series of blocks to block, given what start time
     until what end time.
 
-    requires: - schedule is a sequence (list, tuple, whatever?) of 
+    requires: - schedule is a sequence (list, tuple, whatever?) of
     [block name string, start time, end time] triplets. (for now anyway.)"""
 
     today_date = today()
@@ -191,8 +196,7 @@ def schedule_blocks(schedule):
         for i in range(1, 3):
             # converts start and end time to time object
             working_time = _convert_to_time(scheduled_block[i])
-            scheduled_block[i] = datetime.datetime.combine(
-                today_date, working_time)
+            scheduled_block[i] = datetime.datetime.combine(today_date, working_time)
 
     working_schedule.sort(key=lambda sch: sch[1])  # sort by start time.
 
@@ -219,8 +223,7 @@ def _convert_to_datetime(given_datetime) -> datetime.datetime:
     elif isinstance(given_datetime, datetime.datetime):
         return given_datetime
     else:
-        raise TypeError(
-            "given_datetime not in ISO format or datetime.datetime object")
+        raise TypeError("given_datetime not in ISO format or datetime.datetime object")
 
 
 def _convert_to_time(given_time) -> datetime.time:
