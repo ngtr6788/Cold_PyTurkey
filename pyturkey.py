@@ -8,7 +8,7 @@ import math
 from typing import List, Tuple
 import copy
 
-_COLD_TURKEY = r'"C:\Program Files\Cold Turkey\Cold Turkey Blocker.exe"'
+COLD_TURKEY = r'"C:\Program Files\Cold Turkey\Cold Turkey Blocker.exe"'
 _START = "start"
 _STOP = "stop"
 _ADD = "add"
@@ -35,6 +35,9 @@ ONE_THIRTY = datetime.time(1, 30, 0)
 
 # These are the "starter" PyTurkey functions.
 
+def open_cold_turkey():
+    subprocess.Popen(COLD_TURKEY)
+
 
 def start_block(block_name: str, minutes: int = 0):
     """Blocks a given block_name.
@@ -55,7 +58,7 @@ def start_block(block_name: str, minutes: int = 0):
         LOCK_STATUS = ""
 
     subprocess.run(
-        f'{_COLD_TURKEY} -{_START} "{block_name}" {LOCK_STATUS} {TIME_STATUS}'
+        f'{COLD_TURKEY} -{_START} "{block_name}" {LOCK_STATUS} {TIME_STATUS}'
     )
 
 
@@ -81,18 +84,18 @@ def start_block_until(
 
 def stop_block(block_name: str):
     """Stops the block of a given block_name"""
-    subprocess.run(f'{_COLD_TURKEY} -{_STOP} "{block_name}"')
+    subprocess.run(f'{COLD_TURKEY} -{_STOP} "{block_name}"')
 
 
 def toggle_block(block_name: str):
     """Stars the block if the block is off and turns if off if it is on and unlocked."""
-    subprocess.run(f'{_COLD_TURKEY} -{_TOGGLE} "{block_name}"')
+    subprocess.run(f'{COLD_TURKEY} -{_TOGGLE} "{block_name}"')
 
 
 def add_url(block_name: str, url: str, exception: bool = False):
     """Adds the URL into the block, either as a blocked site or exception"""
     where_add = _EXCEPTION if exception else _WEB
-    subprocess.run(f'{_COLD_TURKEY} -{_ADD} "{block_name}" -{where_add} "{url}"')
+    subprocess.run(f'{COLD_TURKEY} -{_ADD} "{block_name}" -{where_add} "{url}"')
 
 
 def pomodoro(

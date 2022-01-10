@@ -216,12 +216,14 @@ def main():
             stdin_args = input("> suggest ")
             try:
                 stdin_args = shlex.split(stdin_args)
-            except:
+            except ValueError as val_err:
+                print(val_err)
                 print("Invalid parsing of arguments")
                 continue
             try:
                 dict_args = docopt(__doc__, argv=stdin_args, help=True)
-            except:
+            except SystemExit as usage_on_exit:
+                print(usage_on_exit)
                 # Here, I probably typed something wrong. This try
                 # except block is here so that if invalid parameters,
                 # it doesn't quit

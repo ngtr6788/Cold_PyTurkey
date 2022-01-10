@@ -1,19 +1,18 @@
 """pyturkey, a better CLI interface for Cold Turkey, written in Python
 
 Usage:
-  pyturkey [-wh]
-  pyturkey start <block_name> [-wh]
-  pyturkey start <block_name> for <minutes> [-wh]
-  pyturkey start <block_name> until <time> [<date>] [-wh]
-  pyturkey stop <block_name> [-wh]
-  pyturkey add <block_name> <url> [-ewh]
-  pyturkey toggle <block_name> [-wh]
-  pyturkey pomodoro <block_name> <block_minutes> <break_minutes> --loops=LOOPS [-btwh]
+  pyturkey
+  pyturkey start <block_name>
+  pyturkey start <block_name> for <minutes>
+  pyturkey start <block_name> until <time> [<date>]
+  pyturkey stop <block_name>
+  pyturkey add <block_name> <url> [-e]
+  pyturkey toggle <block_name>
+  pyturkey pomodoro <block_name> <block_minutes> <break_minutes> --loops=LOOPS [-bt]
   pyturkey suggest
 
 Options:
   -h --help         Show this screen.
-  -w --warning      Displays non-deadly warning messages
   -e --except       Adds <url> as an exception
   -b --break-first  Starts the pomodoro with the block name unblocked first
   -t --timer        Displays a countdown pomodoro timer 
@@ -25,14 +24,11 @@ Options:
 # UPDATE: Apparently, this library is not maintained for a few years now. However, it's a personal project for myself, I'm not TOO worried about it right now. If I will need to display it to the world, I will really need to fix it.
 
 import pyturkey
-from pyturkey import _COLD_TURKEY, FROZEN_TURKEY
+from pyturkey import FROZEN_TURKEY
 
 from docopt import docopt
-import subprocess
 import sys
 import time, datetime
-import json
-from pathlib import Path
 import math
 import turkeysuggest
 
@@ -40,41 +36,6 @@ import turkeysuggest
 def run(args_dict):
     block_name = args_dict["<block_name>"]
     block_name = FROZEN_TURKEY if block_name == "frozen" else block_name
-    warning = args_dict["--warning"]
-
-    # Here, we're looking for one single .ctbbl file, primarily
-    # so we can assist the client with whether or not
-    # the block name exists in Cold Turkey or not
-    all_ctbbl_files = list(Path(".").glob("**/*.ctbbl"))
-
-    len_ctbbl = len(all_ctbbl_files)
-    block_info = None
-    if len_ctbbl == 1:
-        with all_ctbbl_files[0].open() as block_json:
-            block_info = json.load(block_json)
-    elif len_ctbbl == 0:
-        if warning:
-            print(
-                "No .ctbbl file found, however, not to fret. That file is optional. It's there to help you with pyturkey"
-            )
-    else:
-        if warning:
-            print(
-                "There are too many .ctbbl files in there, but not to fret. Just provide one .ctbbl file that best reflects the actual blocks in Cold Turkey"
-            )
-
-    # Here, we use the information from the .ctbbl to aid
-    # us a little whether the block name is in Cold Turkey GUI or not
-    if not block_info is None:
-        isNot = " " if block_name in block_info else " not "
-        if warning:
-            print(
-                f"The block name you provided is probably{isNot}in your Cold Turkey app.\n"
-            )
-
-            print(
-                "Your .ctbbl does not always reflect the actual blocks in your Cold Turkey. For best results, make sure that your .ctbbl file matches the information on your Cold Turkey so pyturkey can better help you.\n"
-            )
 
     if args_dict["start"]:
         if args_dict["for"]:
@@ -156,7 +117,7 @@ def run(args_dict):
     elif args_dict["suggest"]:
         turkeysuggest.main()
     else:
-        subprocess.Popen(_COLD_TURKEY)
+        pyturkey.open_cold_turkey()
 
 
 if __name__ == "__main__":
