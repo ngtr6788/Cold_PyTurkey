@@ -32,6 +32,10 @@ import random
 from pathlib import Path
 from copy import deepcopy
 import shlex
+from typing import Dict, List, Union
+
+TurkeySettingsDict = Dict[str, Union[str, List[str]]]
+DocoptDict = Dict[str, Union[str, bool, None]]
 
 DEFAULT_SETTINGS = {
     "enabled": "false",
@@ -57,27 +61,30 @@ DEFAULT_SETTINGS = {
 
 
 def main():
-    dict_suggestions = dict()
+    dict_suggestions: Dict[str, TurkeySettingsDict] = dict()
 
-    def print_keys(verbose):
+    def print_keys(verbose: bool):
         if verbose:
             print(json.dumps(dict_suggestions, indent=2))
         else:
             for key in dict_suggestions.keys():
                 print(key)
 
-    def save_to_ctbbl(dict_args):
+    def create_random_filename() -> str:
+        maximum = 10 ** 10
+        random_no = random.randint(1, maximum)
+        file_name = f"suggest_{random_no}.ctbbl"
+        return file_name
+
+    def save_to_ctbbl(dict_args: Dict[str, TurkeySettingsDict]):
         file_name = dict_args["<file_name>"]
 
         if file_name is None:
             # This is to avoid naming conflicts.
-            maximum = 10 ** 10
             all_ctbbl_files = list(Path(".").glob("**/*.ctbbl"))
-            random_no = random.randint(1, maximum)
-            file_name = f"suggestions_{random_no}.ctbbl"
+            file_name = create_random_filename()
             while file_name in all_ctbbl_files:
-                random_no = random.randint(1, maximum)
-                file_name = f"suggestions_{random_no}.ctbbl"
+                file_name = create_random_filename()
             # end of naming conflicts
         else:
             file_name = f"{file_name}.ctbbl"
@@ -90,27 +97,31 @@ def main():
         )
         # end of json dump
 
-    def add_new_block(block_name):
+    def add_new_block(block_name: str):
         if dict_suggestions.get(block_name):
             print(f"Block {block_name} already exists")
         else:
             dict_suggestions[block_name] = deepcopy(DEFAULT_SETTINGS)
             print(f"Block {block_name} added")
 
-    def remove_block(block_name):
+    def remove_block(block_name: str):
         dict_suggestions.pop(block_name)
         print(f"Block {block_name} deleted")
 
-    def unlock_block(block_name, block_dict):
+    def unlock_block(block_name: str, block_dict: TurkeySettingsDict):
         block_dict["lock"] = "none"
         print(f"Block {block_name} unlocked")
 
-    def config_random(block_name, block_dict, dict_args):
+    def config_random(
+        block_name: str, block_dict: TurkeySettingsDict, dict_args: DocoptDict
+    ):
         length = dict_args["<length>"]  # should it be int?
         block_dict["randomTextLength"] = length
         print(f"Block {block_name} set to be locked with {length} random characters")
 
-    def config_range(block_name, block_dict, dict_args):
+    def config_range(
+        block_name: str, block_dict: TurkeySettingsDict, dict_args: DocoptDict
+    ):
         start_time = dict_args["<start_time>"]
         end_time = dict_args["<end_time>"]
 
@@ -134,7 +145,9 @@ def main():
             f"Block {block_name} set to {un}lock at a range from {start_time} to {end_time}"
         )
 
-    def config_restart(block_name, block_dict, dict_args):
+    def config_restart(
+        block_name: str, block_dict: TurkeySettingsDict, dict_args: DocoptDict
+    ):
         no_unlock = dict_args["--no-unlock"]  # should it be bool?
         block_dict["restartUnblock"] = "true" if no_unlock else "false"
         out = "out" if no_unlock else ""
@@ -142,12 +155,16 @@ def main():
             f"Block {block_name} set to be locked until restart, with{out} auto-unlock"
         )
 
-    def config_password(block_name, block_dict, dict_args):
+    def config_password(
+        block_name: str, block_dict: TurkeySettingsDict, dict_args: DocoptDict
+    ):
         password = getpass("Password: ")
         block_dict["password"] = password
         print(f"Block {block_name} set to be locked with password")
 
-    def set_pomodoro(block_name, block_dict, dict_args):
+    def set_pomodoro(
+        block_name: str, block_dict: TurkeySettingsDict, dict_args: DocoptDict
+    ):
         block_min = dict_args["<block_minutes>"]
         break_min = dict_args["<break_minutes>"]
         block_dict["break"] = f"{block_min},{break_min}"
@@ -155,16 +172,25 @@ def main():
             f"Block {block_name} has a {block_min} min block, {break_min} break pomodoro."
         )
 
-    def set_allowance(block_name, block_dict, dict_args):
+    def set_allowance(
+        block_name: str, block_dict: TurkeySettingsDict, dict_args: DocoptDict
+    ):
         minutes = dict_args["<minutes>"]
         block_dict["break"] = f"{minutes}"
         print(f"Block {block_name} has an allowance of {minutes} min.")
 
-    def set_nobreak(block_name, block_dict, dict_args):
+    def set_nobreak(
+        block_name: str, block_dict: TurkeySettingsDict, dict_args: DocoptDict
+    ):
         block_dict["break"] = "none"
         print(f"Block {block_name} has no breaks")
 
-    def manage_url(block_name, block_dict, dict_args, make_exist):
+    def manage_url(
+        block_name: str,
+        block_dict: TurkeySettingsDict,
+        dict_args: DocoptDict,
+        make_exist: bool,
+    ):
         url = dict_args["<url>"]
         exception = dict_args["--except"]
         if exception:
@@ -186,7 +212,12 @@ def main():
             except ValueError:
                 print(f"{url} does not exit in {block_name}")
 
-    def manage_apps(block_name, block_dict, dict_args, make_exist):
+    def manage_apps(
+        block_name: str,
+        block_dict: TurkeySettingsDict,
+        dict_args: DocoptDict,
+        make_exist: bool,
+    ):
         # NOTE: This implementation is very Windows specific.
         # I do not own a Mac, so I have no idea how it might look
 
@@ -209,10 +240,9 @@ def main():
                     except:
                         print(f"{path_name} does not exit in {block_name}")
 
-    # print(DEFAULT_SETTINGS)
-
     while True:
         try:
+            # Step 1: we first read input
             stdin_args = input("> suggest ")
             try:
                 stdin_args = shlex.split(stdin_args)
@@ -220,8 +250,10 @@ def main():
                 print(val_err)
                 print("Invalid parsing of arguments")
                 continue
+
+            # Step 2: we parse the input like one would on a command line
             try:
-                dict_args = docopt(__doc__, argv=stdin_args, help=True)
+                dict_args: DocoptDict = docopt(__doc__, argv=stdin_args, help=True)
             except SystemExit as usage_on_exit:
                 print(usage_on_exit)
                 # Here, I probably typed something wrong. This try
@@ -229,19 +261,25 @@ def main():
                 # it doesn't quit
                 continue
 
+            # Step 3: we do stuff based on the arguments
+
+            # we quit
             if dict_args.get("quit") or dict_args.get("q"):
                 raise KeyboardInterrupt
 
+            # we display the block names
             if dict_args["blocks"]:
                 print_keys(dict_args["--verbose"])
                 continue
 
+            # we save it into a .ctbbl file (JSON format)
             if dict_args["save"]:
                 save_to_ctbbl(dict_args)
                 continue
 
             block_name = dict_args["<block_name>"]
 
+            # add new block name
             if dict_args["new"]:
                 add_new_block(block_name)
 
@@ -253,15 +291,19 @@ def main():
                 block_dict = dict_suggestions[block_name]
             # end of checking existence
 
+            # remove block name
             if dict_args["remove"]:
                 remove_block(block_name)
 
+            # display a block's settings
             if dict_args["settings"]:
                 print(json.dumps(block_dict, indent=2))
 
+            # set the block name to unlock
             if dict_args["unlock"]:
                 unlock_block(block_name, block_dict)
 
+            # here, we configure and/or lock our lock
             config_mode = dict_args["config"]
             lock_mode = dict_args["lock"] or dict_args["--lock"]
 
@@ -289,7 +331,9 @@ def main():
                 print(
                     f"Block {block_name} has been locked by {lock_method} on settings"
                 )
+            # end of config/lock
 
+            # here, we deal with breaks, like pomodoro and allowances
             if dict_args["pomodoro"]:
                 set_pomodoro(block_name, block_dict, dict_args)
             elif dict_args["allowance"]:
@@ -298,12 +342,14 @@ def main():
             elif dict_args["nobreak"]:
                 set_nobreak(block_name, block_dict, dict_args)
 
+            # here, we deal with adding and deleting urls/paths
             create = False
             if dict_args["add"]:
                 create = True
             elif dict_args["delete"]:
                 create = False
 
+            # we choose which location to add/delete
             if dict_args["web"]:
                 manage_url(block_name, block_dict, dict_args, create)
             else:
@@ -312,6 +358,8 @@ def main():
                 manage_apps(block_name, block_dict, dict_args, create)
 
         except KeyboardInterrupt:
+            # this is when someone presses Ctrl + C (Cmd + C), you double
+            # check to make sure they really want to exit suggest
             try:
                 wants_exit = False
                 while True:
@@ -336,6 +384,8 @@ def main():
             except KeyboardInterrupt:
                 break
         except EOFError:
+            # if we're reading it from a text file or whatever, when
+            # you finish reading, it's assumed to be the end of it
             break
 
 

@@ -31,9 +31,53 @@ import sys
 import time, datetime
 import math
 import turkeysuggest
+from typing import Dict, Union
+
+DocoptDict = Dict[str, Union[str, bool, None]]
+
+def display_pomodoro_timer(
+    block_name: str,
+    block_duration: int,
+    break_duration: int,
+    loops: int,
+    break_first: bool,
+):
+    block_session = not break_first
+
+    now_func = datetime.datetime.now
+
+    for i in range(2 * loops):
+        if block_session:
+            pyturkey.start_block(block_name, block_duration)
+            duration = block_duration
+            session_type = "Block session"
+        else:
+            pyturkey.stop_block(block_name)
+            duration = break_duration
+            session_type = "Break session"
+
+        now = now_func()
+        later = now + datetime.timedelta(minutes=duration)
+
+        while now_func() < later:
+            sys.stdout.write("\r")
+            remaining = (later - now_func()).total_seconds()
+
+            min_remain = math.floor(remaining / 60)
+            sec_remain = math.floor(remaining % 60)
+
+            sys.stdout.write(f"Loop #{i // 2 + 1} ")
+            sys.stdout.write(session_type)
+            sys.stdout.write(f" {min_remain} min {sec_remain} s remaining   ")
+            sys.stdout.flush()
+            time.sleep(1)
+
+        block_session = not block_session
 
 
-def run(args_dict):
+def main():
+    args_dict: DocoptDict = docopt(__doc__)
+
     block_name = args_dict["<block_name>"]
     block_name = FROZEN_TURKEY if block_name == "frozen" else block_name
 
@@ -72,39 +116,9 @@ def run(args_dict):
             loops = int(args_dict["--loops"])
 
             if args_dict["--timer"]:
-                block_session = not break_first
-
-                now_func = datetime.datetime.now
-
-                for i in range(2 * loops):
-                    if block_session:
-                        pyturkey.start_block(block_name, block_duration)
-                        duration = block_duration
-                        session_type = "Block session"
-                    else:
-                        pyturkey.stop_block(block_name)
-                        duration = break_duration
-                        session_type = "Break session"
-
-                    now = now_func()
-                    later = now + datetime.timedelta(minutes=duration)
-
-                    while now_func() < later:
-                        sys.stdout.write("\r")
-                        remaining = (later - now_func()).total_seconds()
-
-                        min_remain = math.floor(remaining / 60)
-                        sec_remain = math.floor(remaining % 60)
-
-                        sys.stdout.write(f"Loop #{i // 2 + 1} ")
-                        sys.stdout.write(session_type)
-                        sys.stdout.write(
-                            f" {min_remain} min {sec_remain} s remaining   "
-                        )
-                        sys.stdout.flush()
-                        time.sleep(1)
-
-                    block_session = not block_session
+                display_pomodoro_timer(
+                    block_name, block_duration, break_duration, loops, break_first
+                )
             else:
                 pyturkey.pomodoro(
                     block_name, block_duration, break_duration, loops, break_first
@@ -121,5 +135,4 @@ def run(args_dict):
 
 
 if __name__ == "__main__":
-    args_dict = docopt(__doc__)
-    run(args_dict)
+    main()

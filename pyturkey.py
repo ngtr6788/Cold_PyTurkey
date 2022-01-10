@@ -5,8 +5,8 @@ import subprocess
 import time
 import datetime
 import math
-from typing import List, Tuple
 import copy
+from typing import Union
 
 COLD_TURKEY = r'"C:\Program Files\Cold Turkey\Cold Turkey Blocker.exe"'
 _START = "start"
@@ -33,7 +33,10 @@ MILLISEC_BEFORE_MIDNIGHT = datetime.time(23, 59, 59, 999999)
 MIDNIGHT = datetime.time(0, 0, 0, 0)
 ONE_THIRTY = datetime.time(1, 30, 0)
 
+# TODO: Add type hints and stuff if necessary
+
 # These are the "starter" PyTurkey functions.
+
 
 def open_cold_turkey():
     subprocess.Popen(COLD_TURKEY)
@@ -66,7 +69,7 @@ def start_block(block_name: str, minutes: int = 0):
 
 
 def start_block_until(
-    block_name: str, end_time: datetime.datetime, start_time: datetime.datetime = now()
+    block_name: str, end_time: Union[datetime.datetime, str], start_time: Union[datetime.datetime, str] = now()
 ):
     """Blocks a given block_name from the optional start_time to end_time.
     end_time and start_time can be either in ISO format or datetime object."""
@@ -88,12 +91,12 @@ def stop_block(block_name: str):
 
 
 def toggle_block(block_name: str):
-    """Stars the block if the block is off and turns if off if it is on and unlocked."""
+    """Toggles the block, that is, starts the block if the block is off and turns it off if it is unlocked and on."""
     subprocess.run(f'{COLD_TURKEY} -{_TOGGLE} "{block_name}"')
 
 
 def add_url(block_name: str, url: str, exception: bool = False):
-    """Adds the URL into the block, either as a blocked site or exception"""
+    """Adds the URL into the block as a blocked site, unless exception=True, which is added as an exception"""
     where_add = _EXCEPTION if exception else _WEB
     subprocess.run(f'{COLD_TURKEY} -{_ADD} "{block_name}" -{where_add} "{url}"')
 
@@ -105,10 +108,7 @@ def pomodoro(
     loops: int = 1,
     break_first: bool = False,
 ):
-    """
-    This emulates the pomodoro timer, blocking the block_name for a few minutes and
-    unlocks it for a few minutes. You can also choose to have the block unlocked first
-    and loop over and over.
+    """This emulates the pomodoro timer, blocking the block_name for a few minutes and unlocks it for a few minutes, for a given amount of loops. You can also choose to have the block unlocked first with break_first.
 
     By default, the block is blocked first and looped once."""
 
@@ -147,9 +147,9 @@ def frozen_pomodoro(work_min: int, frozen_min: int, loops: int = 1):
 # These will be called the night Frozen block functions.
 
 
-def frozen_at_night(set_time):
+def frozen_at_night(set_time: Union[datetime.time, str]):
     """Activates Frozen Turkey from specified set_time to 1:30:00AM next day.
-    requires: 10:30:00PM <= set_time <= 11:59:59PM"""
+    Requires that 10:30:00PM <= set_time <= 11:59:59PM, or ValueError will be thrown"""
 
     start_block_time = _convert_to_time(set_time)
 
@@ -169,9 +169,7 @@ def frozen_at_night(set_time):
 
 
 def frozen_at_midnight():
-    """Activates Frozen Turkey at midnight for 1.5h
-    note: this while loop is just preemptive if Task Scheduler doesn't program
-    it to run at midnight."""
+    """Activates Frozen Turkey at midnight until 1:30AM."""
 
     today_date = today()
     if MIDNIGHT <= now().time() < ONE_THIRTY:
@@ -185,38 +183,41 @@ def frozen_at_midnight():
 
 
 # This is my "catch-all" scheduling function, first version.
-def schedule_blocks(schedule):
-    """Schedules a series of blocks to block, given what start time
-    until what end time.
 
-    requires: - schedule is a sequence (list, tuple, whatever?) of
-    [block name string, start time, end time] triplets. (for now anyway.)"""
+# RIGHT NOW, SCHEDULE BLOCKS IS DISABLED, WILL MAKE THINGS CLEARER
 
-    today_date = today()
+# def schedule_blocks(schedule: Sequence[]):
+#     """Schedules a series of blocks to block, given what start time
+#     until what end time.
 
-    working_schedule = copy.deepcopy(schedule)
-    for scheduled_block in working_schedule:
-        for i in range(1, 3):
-            # converts start and end time to time object
-            working_time = _convert_to_time(scheduled_block[i])
-            scheduled_block[i] = datetime.datetime.combine(today_date, working_time)
+#     requires: - schedule is a sequence (list, tuple, whatever?) of
+#     [block name string, start time, end time] triplets. (for now anyway.)"""
 
-    working_schedule.sort(key=lambda sch: sch[1])  # sort by start time.
+#     today_date = today()
 
-    for block_name, start_time, end_time in working_schedule:
-        if now() > start_time:
-            if now() < end_time:
-                start_block_until(block_name, end_time)
-            else:
-                continue
-        else:
-            start_block_until(block_name, end_time, start_time)
+#     working_schedule = copy.deepcopy(schedule)
+#     for scheduled_block in working_schedule:
+#         for i in range(1, 3):
+#             # converts start and end time to time object
+#             working_time = _convert_to_time(scheduled_block[i])
+#             scheduled_block[i] = datetime.datetime.combine(today_date, working_time)
+
+#     working_schedule.sort(key=lambda sch: sch[1])  # sort by start time.
+
+#     for block_name, start_time, end_time in working_schedule:
+#         if now() > start_time:
+#             if now() < end_time:
+#                 start_block_until(block_name, end_time)
+#             else:
+#                 continue
+#         else:
+#             start_block_until(block_name, end_time, start_time)
 
 
 # Secret convert to time object functions.
 
 
-def _convert_to_datetime(given_datetime) -> datetime.datetime:
+def _convert_to_datetime(given_datetime: Union[datetime.datetime, str]) -> datetime.datetime:
     """Returns the datetime object telling the date and time given
     from either ISO format or existing datetime object.
 
@@ -229,7 +230,7 @@ def _convert_to_datetime(given_datetime) -> datetime.datetime:
         raise TypeError("given_datetime not in ISO format or datetime.datetime object")
 
 
-def _convert_to_time(given_time) -> datetime.time:
+def _convert_to_time(given_time: Union[datetime.datetime, str]) -> datetime.time:
     """Returns the time object telling the time from ISO format or existing time object.
 
     Raises TypeError if it's not str or datetime.datetime"""
