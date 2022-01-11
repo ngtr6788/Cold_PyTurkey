@@ -23,17 +23,18 @@ Options:
 
 # UPDATE: Apparently, this library is not maintained for a few years now. However, it's a personal project for myself, I'm not TOO worried about it right now. If I will need to display it to the world, I will really need to fix it.
 
-import pyturkey
-from pyturkey import FROZEN_TURKEY
+import src.pyturkey as pyturkey
+from src.pyturkey import FROZEN_TURKEY
 
-from docopt import docopt
+from src.docopt import docopt
 import sys
 import time, datetime
 import math
-import turkeysuggest
+import src.turkeysuggest as turkeysuggest
 from typing import Dict, Union
 
 DocoptDict = Dict[str, Union[str, bool, None]]
+
 
 def display_pomodoro_timer(
     block_name: str,

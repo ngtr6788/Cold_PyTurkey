@@ -24,8 +24,10 @@ Options:
   -e --except     Adds a URL as an exception
 """
 
+# NOTE: This can be either run as a script or imported as a module, like in how main.py is run
+
 import re
-from docopt import docopt
+from src.docopt import docopt
 import json
 from getpass import getpass
 import random
@@ -65,6 +67,8 @@ def main():
 
     def print_keys(verbose: bool):
         if verbose:
+            # verbose just means that you're printing both the
+            # keys AND the settings along with it
             print(json.dumps(dict_suggestions, indent=2))
         else:
             for key in dict_suggestions.keys():
@@ -130,11 +134,11 @@ def main():
         start_time_match = parse_time.match(start_time)
         end_time_match = parse_time.match(end_time)
 
-        sh = start_time_match.group(1)
-        sm = start_time_match.group(2)
+        sh = start_time_match.group(1)  # start hour
+        sm = start_time_match.group(2)  # start minute
 
-        eh = end_time_match.group(1)
-        em = end_time_match.group(2)
+        eh = end_time_match.group(1)  # end hour
+        em = end_time_match.group(2)  # end minute
 
         un = "un" if dict_args["--unlocked"] else ""
 
